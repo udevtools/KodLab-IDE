@@ -1,0 +1,102 @@
+// Exemple : Piano Virtuel avec KodLab
+// Démonstration du système audio
+
+let selectedNote = 0
+let noteNames = ["do", "re", "mi", "fa", "sol", "la", "si", "do2"]
+let keyPressed = false
+let noteColors = ["#FF0000", "#FF7F00", "#FFFF00", "#00FF00", "#0000FF", "#4B0082", "#9400D3", "#FF1493"]
+
+function start()
+    clearScreen("#001122")
+    drawText("Piano Virtuel KodLab", 100, 30, "#FFFFFF")
+    drawText("Utilisez les fleches Gauche/Droite", 80, 280, "#CCCCCC")
+    drawText("Appuyez sur ESPACE pour jouer", 90, 295, "#CCCCCC")
+end
+
+function update()
+    clearScreen("#001122")
+    
+    // Navigation entre les notes
+    if isKeyPressed("left") && !keyPressed
+        selectedNote = selectedNote - 1
+        if selectedNote < 0
+            selectedNote = 7
+        end
+        keyPressed = true
+    end
+    
+    if isKeyPressed("right") && !keyPressed
+        selectedNote = selectedNote + 1
+        if selectedNote > 7
+            selectedNote = 0
+        end
+        keyPressed = true
+    end
+    
+    // Jouer la note sélectionnée
+    if isKeyPressed("space") && !keyPressed
+        playSound(noteNames[selectedNote], 0.5)
+        keyPressed = true
+    end
+    
+    // Reset de la détection de touche
+    if !isKeyPressed("left") && !isKeyPressed("right") && !isKeyPressed("space")
+        keyPressed = false
+    end
+    
+    // Affichage du piano
+    drawPiano()
+    drawInstructions()
+end
+
+function drawPiano()
+    // Titre
+    drawText("Piano Virtuel KodLab", 100, 30, "#FFFFFF")
+    
+    // Dessiner les 8 touches du piano
+    for i = 0 to 7
+        x = 50 + (i * 40)
+        y = 80
+        width = 35
+        height = 120
+        
+        // Couleur de la touche
+        color = "#FFFFFF"
+        if i == selectedNote
+            color = noteColors[i]  // Couleur spéciale pour la note sélectionnée
+        end
+        
+        // Dessiner la touche
+        drawRect(x, y, width, height, color)
+        
+        // Contour noir
+        drawRect(x, y, width, 2, "#000000")           // Haut
+        drawRect(x, y + height - 2, width, 2, "#000000") // Bas
+        drawRect(x, y, 2, height, "#000000")          // Gauche
+        drawRect(x + width - 2, y, 2, height, "#000000") // Droite
+        
+        // Nom de la note
+        textColor = "#000000"
+        if i == selectedNote
+            textColor = "#FFFFFF"
+        end
+        drawText(noteNames[i], x + 8, y + height - 10, textColor)
+    end
+    
+    // Indicateur de sélection
+    selectedX = 50 + (selectedNote * 40)
+    drawText("▲", selectedX + 15, 75, noteColors[selectedNote])
+    drawText("Sélectionné", selectedX - 10, 60, noteColors[selectedNote])
+end
+
+function drawInstructions()
+    drawText("Instructions:", 80, 230, "#FFFF00")
+    drawText("← →  : Changer de note", 100, 250, "#CCCCCC")
+    drawText("ESPACE : Jouer la note", 100, 270, "#CCCCCC")
+    
+    drawText("Notes disponibles:", 280, 230, "#FFFF00")
+    drawText("Do Ré Mi Fa Sol La Si Do", 300, 250, "#CCCCCC")
+    
+    // Note actuellement sélectionnée
+    drawText("Note actuelle: " + noteNames[selectedNote], 80, 290, noteColors[selectedNote])
+end

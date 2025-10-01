@@ -1,0 +1,185 @@
+// === LABYRINTHE ===
+// Trouvez la sortie du labyrinthe !
+// Utilisez les flèches pour vous déplacer
+
+// Position du joueur
+let joueurX = 1
+let joueurY = 1
+
+// Position de la sortie
+let sortieX = 8
+let sortieY = 7
+
+// Taille des cellules
+let tailleCellule = 25
+let decalageX = 50
+let decalageY = 40
+
+// État du jeu
+let jeuTermine = false
+let delaiTouche = 0
+
+// Labyrinthe : 0 = passage, 1 = mur
+// Grille 10x8 pour la console - utilisation d'un tableau 2D
+let largeur = 10
+let hauteur = 8
+
+// Représentation du labyrinthe avec un tableau 2D (format Sokoban - une seule ligne)
+// 1 = mur, 0 = passage
+let maze = [[1,1,1,1,1,1,1,1,1,1],[1,0,0,1,0,0,0,1,0,1],[1,0,1,1,0,1,1,1,0,1],[1,0,0,0,0,1,0,0,0,1],[1,1,1,0,1,1,0,1,0,1],[1,0,0,0,0,1,0,0,0,1],[1,0,1,1,0,1,1,1,0,1],[1,0,0,0,0,0,0,0,0,1]]
+
+function start()
+    clearScreen("#001122")
+end
+
+function update()
+    clearScreen("#001122")
+    
+    // Dessiner le titre
+    drawText("LABYRINTHE", 200, 15, "#FFFFFF")
+    
+    // Dessiner le labyrinthe
+    dessinerLabyrinthe()
+    
+    // Dessiner le joueur
+    dessinerJoueur()
+    
+    // Dessiner la sortie
+    dessinerSortie()
+    
+    // Gestion des contrôles
+    if !jeuTermine
+        gererControles()
+        verifierVictoire()
+    end
+    
+    // Messages
+    if jeuTermine
+        drawText("FELICITATIONS ! SORTIE TROUVEE !", 200, 280, "#00FF00")
+        drawText("Appuyez sur ESPACE pour recommencer", 200, 295, "#FFFF00")
+        
+        if isKeyPressed("space")
+            recommencer()
+        end
+    else
+        drawText("Trouvez la sortie ! (ESPACE pour recommencer)", 200, 280, "#FFFF00")
+    end
+end
+
+function dessinerLabyrinthe()
+    // Dessiner chaque cellule du labyrinthe
+    y = 0
+    while y < hauteur
+        x = 0
+        while x < largeur
+            celluleX = decalageX + x * tailleCellule
+            celluleY = decalageY + y * tailleCellule
+            
+            // Accès direct au tableau - plus propre !
+            if maze[y][x] == 1
+                // Dessiner un mur avec effet 3D
+                drawRect(celluleX, celluleY, tailleCellule, tailleCellule, "#666666")
+                drawRect(celluleX + 1, celluleY + 1, tailleCellule - 2, tailleCellule - 2, "#888888")
+            else
+                // Dessiner un passage
+                drawRect(celluleX, celluleY, tailleCellule, tailleCellule, "#222222")
+            end
+            
+            x = x + 1
+        end
+        y = y + 1
+    end
+end
+
+function obtenirCellule(x, y)
+    // Accès direct au tableau 2D - beaucoup plus simple !
+    return maze[y][x]
+end
+
+function dessinerJoueur()
+    playerX = decalageX + joueurX * tailleCellule + 3
+    playerY = decalageY + joueurY * tailleCellule + 3
+    
+    // Corps du joueur (cercle simplifié)
+    drawRect(playerX + 4, playerY + 2, 12, 16, "#0088FF")
+    drawRect(playerX + 2, playerY + 4, 16, 12, "#0088FF")
+    
+    // Yeux
+    drawRect(playerX + 6, playerY + 6, 2, 2, "#FFFFFF")
+    drawRect(playerX + 12, playerY + 6, 2, 2, "#FFFFFF")
+end
+
+function dessinerSortie()
+    sortiePixelX = decalageX + sortieX * tailleCellule + 2
+    sortiePixelY = decalageY + sortieY * tailleCellule + 2
+    
+    // Dessiner la sortie comme une porte dorée
+    drawRect(sortiePixelX, sortiePixelY, tailleCellule - 4, tailleCellule - 4, "#FFD700")
+    drawRect(sortiePixelX + 2, sortiePixelY + 2, tailleCellule - 8, tailleCellule - 8, "#FFA500")
+    
+    // Effet scintillement
+    drawRect(sortiePixelX + 4, sortiePixelY + 4, 4, 4, "#FFFF00")
+    drawRect(sortiePixelX + 13, sortiePixelY + 13, 4, 4, "#FFFF00")
+end
+
+function gererControles()
+    // Gestion du délai
+    if delaiTouche > 0
+        delaiTouche = delaiTouche - 1
+    end
+    
+    if delaiTouche == 0
+        nouveauX = joueurX
+        nouveauY = joueurY
+        
+        if isKeyPressed("left")
+            nouveauX = joueurX - 1
+            delaiTouche = 8
+        end
+        if isKeyPressed("right")
+            nouveauX = joueurX + 1
+            delaiTouche = 8
+        end
+        if isKeyPressed("up")
+            nouveauY = joueurY - 1
+            delaiTouche = 8
+        end
+        if isKeyPressed("down")
+            nouveauY = joueurY + 1
+            delaiTouche = 8
+        end
+        
+        // Vérifier collision avec murs
+        if verifierCollision(nouveauX, nouveauY)
+            joueurX = nouveauX
+            joueurY = nouveauY
+        end
+    end
+end
+
+function verifierCollision(x, y)
+    // Vérifier les limites
+    if x < 0 || x >= largeur || y < 0 || y >= hauteur
+        return false
+    end
+    
+    // Vérifier directement dans le tableau - super propre !
+    if maze[y][x] == 0
+        return true
+    end
+    
+    return false
+end
+
+function verifierVictoire()
+    if joueurX == sortieX && joueurY == sortieY
+        jeuTermine = true
+    end
+end
+
+function recommencer()
+    joueurX = 1
+    joueurY = 1
+    jeuTermine = false
+    delaiTouche = 0
+end

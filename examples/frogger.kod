@@ -1,0 +1,256 @@
+// Jeu: Frogger Simplifié  
+// Aidez la grenouille à traverser la route sans se faire écraser !
+
+// Variables de la grenouille
+let frogX = 200
+let frogY = 270
+let frogSize = 12
+let moveTimer = 0
+let canMove = true
+
+// Variables des voitures (3 files)
+let car1X = [50, 200, 350]
+let car1Speed = 2
+let car2X = [100, 300]  
+let car2Speed = -1.5
+let car3X = [0, 150, 300]
+let car3Speed = 2.5
+
+// Variables du jeu
+let score = 0
+let lives = 3
+let level = 1
+let gameOver = false
+let hasWon = false
+let safeZoneTimer = 0
+
+function start()
+    clearScreen("#004400")
+    playSound("do", 0.3)
+end
+
+function update()
+    if gameOver
+        showGameOver()
+        return
+    end
+    
+    if hasWon
+        showWin()
+        return
+    end
+    
+    clearScreen("#004400")
+    
+    // Mouvement de la grenouille
+    updateFrog()
+    
+    // Mouvement des voitures
+    updateCars()
+    
+    // Vérification des collisions
+    checkCollisions()
+    
+    // Vérification de la victoire
+    checkWin()
+    
+    // Affichage
+    drawGame()
+end
+
+function updateFrog()
+    // Timer pour limiter la vitesse de déplacement
+    if moveTimer > 0
+        moveTimer = moveTimer - 1
+        canMove = false
+    else
+        canMove = true
+    end
+    
+    if !canMove
+        return
+    end
+    
+    // Mouvement avec les flèches
+    if isKeyPressed("up") && frogY > 20
+        frogY = frogY - 20
+        moveTimer = 8
+        playSound("mi", 0.1)
+    end
+    
+    if isKeyPressed("down") && frogY < 270
+        frogY = frogY + 20  
+        moveTimer = 8
+        playSound("mi", 0.1)
+    end
+    
+    if isKeyPressed("left") && frogX > 20
+        frogX = frogX - 20
+        moveTimer = 8
+        playSound("mi", 0.1) 
+    end
+    
+    if isKeyPressed("right") && frogX < 380
+        frogX = frogX + 20
+        moveTimer = 8
+        playSound("mi", 0.1)
+    end
+end
+
+function updateCars()
+    // File 1 (y=200, vers la droite)
+    for i = 0 to 2
+        car1X[i] = car1X[i] + car1Speed
+        if car1X[i] > 420
+            car1X[i] = -40
+        end
+    end
+    
+    // File 2 (y=160, vers la gauche)  
+    for i = 0 to 1
+        car2X[i] = car2X[i] + car2Speed
+        if car2X[i] < -40
+            car2X[i] = 420
+        end
+    end
+    
+    // File 3 (y=120, vers la droite)
+    for i = 0 to 2
+        car3X[i] = car3X[i] + car3Speed  
+        if car3X[i] > 420
+            car3X[i] = -40
+        end
+    end
+end
+
+function checkCollisions()
+    // Zone de sécurité (haut et bas)
+    if frogY <= 40 || frogY >= 250
+        return
+    end
+    
+    // Collision avec file 1 (y=200)
+    if frogY >= 190 && frogY <= 210
+        for i = 0 to 2
+            if frogX >= car1X[i] - 15 && frogX <= car1X[i] + 45
+                hitBycar()
+            end
+        end
+    end
+    
+    // Collision avec file 2 (y=160)
+    if frogY >= 150 && frogY <= 170
+        for i = 0 to 1
+            if frogX >= car2X[i] - 15 && frogX <= car2X[i] + 45
+                hitBycar()
+            end
+        end
+    end
+    
+    // Collision avec file 3 (y=120)  
+    if frogY >= 110 && frogY <= 130
+        for i = 0 to 2
+            if frogX >= car3X[i] - 15 && frogX <= car3X[i] + 45
+                hitBycar()
+            end
+        end
+    end
+end
+
+function hitBycar()
+    lives = lives - 1
+    frogX = 200
+    frogY = 270
+    playSound("si", 0.4)
+    
+    if lives <= 0
+        gameOver = true
+    end
+end
+
+function checkWin()
+    // Grenouille atteint la zone de sécurité en haut
+    if frogY <= 40
+        score = score + (level * 100)
+        level = level + 1
+        
+        // Réinitialiser position
+        frogX = 200
+        frogY = 270
+        
+        // Augmenter la vitesse des voitures
+        car1Speed = car1Speed + 0.3
+        car2Speed = car2Speed - 0.3  // Plus rapide vers la gauche
+        car3Speed = car3Speed + 0.3
+        
+        playSound("sol", 0.4)
+        
+        if level > 10
+            hasWon = true
+        end
+    end
+end
+
+function drawGame()
+    // Zones de sécurité
+    drawRect(0, 0, 400, 50, "#00AA00")    // Zone d'arrivée (vert)
+    drawRect(0, 250, 400, 50, "#00AA00")  // Zone de départ (vert)
+    
+    // Route
+    drawRect(0, 50, 400, 200, "#444444")  // Asphalte gris
+    
+    // Lignes de la route
+    for i = 0 to 19
+        drawRect(i * 20, 80, 10, 2, "#FFFFFF")   // Ligne médiane 1
+        drawRect(i * 20, 140, 10, 2, "#FFFFFF")  // Ligne médiane 2 
+        drawRect(i * 20, 180, 10, 2, "#FFFFFF")  // Ligne médiane 3
+        drawRect(i * 20, 220, 10, 2, "#FFFFFF")  // Ligne médiane 4
+    end
+    
+    // Grenouille
+    drawCircle(frogX, frogY, frogSize, "#00FF00")
+    drawRect(frogX - 3, frogY - 8, 6, 4, "#004400")  // Corps
+    
+    // Voitures file 1 (rouge, vers droite)
+    for i = 0 to 2
+        drawRect(car1X[i], 195, 30, 10, "#FF0000")
+    end
+    
+    // Voitures file 2 (bleue, vers gauche) 
+    for i = 0 to 1
+        drawRect(car2X[i], 155, 30, 10, "#0000FF")
+    end
+    
+    // Voitures file 3 (jaune, vers droite)
+    for i = 0 to 2
+        drawRect(car3X[i], 115, 30, 10, "#FFFF00") 
+    end
+    
+    // Interface
+    drawText("FROGGER", 200, 25, "#FFFFFF")
+    drawText("Score: " + score, 60, 285, "#FFFFFF")
+    drawText("Vies: " + lives, 200, 285, "#FF0000")
+    drawText("Niveau: " + level, 340, 285, "#FFFF00")
+    
+    if lives > 0
+        drawText("Flèches pour bouger - Atteignez le haut!", 200, 300, "#CCCCCC")
+    end
+end
+
+function showGameOver()
+    clearScreen("#330000")
+    drawText("GAME OVER", 200, 120, "#FF0000")
+    drawText("La grenouille a été écrasée!", 200, 150, "#FFFFFF")
+    drawText("Score final: " + score, 200, 170, "#FFFF00")
+    drawText("Niveau atteint: " + level, 200, 190, "#FFFF00")
+    drawText("Rechargez pour rejouer", 200, 220, "#CCCCCC")
+end
+
+function showWin()
+    clearScreen("#003300")  
+    drawText("INCROYABLE!", 200, 120, "#00FF00")
+    drawText("Vous avez traversé 10 niveaux!", 200, 150, "#FFFFFF")
+    drawText("Score final: " + score, 200, 170, "#FFFF00")
+    drawText("Maître des traversées!", 200, 190, "#00FF00")
+    drawText("Rechargez pour recommencer", 200, 220, "#CCCCCC")
+end

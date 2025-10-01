@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KodLab - Émulateur</title>
+    <style>
+        /* Variables globales - Mode émulateur */
+        :root {
+            --primary: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --primary-solid: #667eea;
+            --accent: #00d4aa;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --error: #ef4444;
+            
+            --bg-main: #0f0f23;
+            --bg-panel: #1a1a2e;
+            --bg-elevated: #16213e;
+            --bg-surface: #0f3460;
+            
+            --text-primary: #e2e8f0;
+            --text-secondary: #94a3b8;
+            --text-muted: #64748b;
+            
+            --border-color: #334155;
+            --border-light: rgba(148, 163, 184, 0.1);
+            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            --shadow-glow: 0 0 20px rgba(102, 126, 234, 0.3);
+            
+            --radius-md: 8px;
+            --radius-lg: 12px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg-main);
+            color: var(--text-primary);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        /* Arrière-plan avec effet de gradient */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: radial-gradient(ellipse at top, rgba(102, 126, 234, 0.1) 0%, transparent 50%);
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        .emulator-container {
+            background: var(--bg-panel);
+            border: 2px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: 30px;
+            box-shadow: var(--shadow-lg);
+            text-align: center;
+            max-width: 600px;
+            width: 100%;
+        }
+
+        .header {
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            background: var(--primary);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            color: var(--text-secondary);
+            font-size: 1.1rem;
+        }
+
+        .controls {
+            margin-bottom: 25px;
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .game-selector {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        select {
+            background: var(--bg-elevated);
+            color: var(--text-primary);
+            border: 2px solid var(--border-color);
+            border-radius: var(--radius-md);
+            padding: 10px 15px;
+            font-size: 0.95rem;
+            outline: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        select:hover {
+            border-color: var(--primary-solid);
+        }
+
+        select:focus {
+            border-color: var(--primary-solid);
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.2);
+        }
+
+        .btn {
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: var(--radius-md);
+            padding: 12px 20px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg), var(--shadow-glow);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .btn-secondary {
+            background: var(--bg-elevated);
+            border: 2px solid var(--border-color);
+        }
+
+        .btn-secondary:hover {
+            border-color: var(--primary-solid);
+            background: var(--bg-surface);
+        }
+
+        .canvas-container {
+            background: var(--bg-elevated);
+            border-radius: var(--radius-lg);
+            padding: 20px;
+            margin: 20px 0;
+            box-shadow: inset 0 2px 10px rgba(0,0,0,0.3);
+        }
+
+        #gameCanvas {
+            border: 3px solid var(--border-color);
+            background: #000;
+            image-rendering: pixelated;
+            image-rendering: -moz-crisp-edges;
+            image-rendering: crisp-edges;
+            border-radius: var(--radius-md);
+            box-shadow: 
+                var(--shadow-lg),
+                0 0 40px rgba(0,0,0,0.5);
+            transition: all 0.3s ease;
+        }
+
+        #gameCanvas:hover {
+            box-shadow: 
+                var(--shadow-lg),
+                0 0 60px rgba(102, 126, 234, 0.3),
+                0 0 40px rgba(0,0,0,0.5);
+        }
+
+        .game-info {
+            background: var(--bg-elevated);
+            border-radius: var(--radius-md);
+            padding: 15px;
+            margin-top: 20px;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .status {
+            padding: 10px 15px;
+            border-radius: var(--radius-md);
+            margin: 10px 0;
+            font-weight: 500;
+        }
+
+        .status.success {
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--success);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+        }
+
+        .status.error {
+            background: rgba(239, 68, 68, 0.1);
+            color: var(--error);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+        }
+
+        .status.info {
+            background: rgba(102, 126, 234, 0.1);
+            color: var(--primary-solid);
+            border: 1px solid rgba(102, 126, 234, 0.3);
+        }
+
+        .back-link {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            color: var(--text-secondary);
+            text-decoration: none;
+            padding: 10px 15px;
+            background: var(--bg-panel);
+            border-radius: var(--radius-md);
+            border: 1px solid var(--border-color);
+            transition: all 0.3s ease;
+        }
+
+        .back-link:hover {
+            color: var(--text-primary);
+            background: var(--bg-elevated);
+            border-color: var(--primary-solid);
+        }
+
+        .fps-counter {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: var(--bg-panel);
+            padding: 8px 12px;
+            border-radius: var(--radius-md);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            border: 1px solid var(--border-color);
+        }
+
+        @media (max-width: 768px) {
+            .emulator-container {
+                padding: 20px;
+                margin: 20px;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .controls {
+                flex-direction: column;
+                gap: 10px;
+            }
+            
+            .game-selector {
+                flex-direction: column;
+                width: 100%;
+            }
+            
+            select, .btn {
+                width: 100%;
+            }
+
+            #gameCanvas {
+                max-width: 100%;
+                height: auto;
+            }
+        }
+    </style>
+</head>
+<body>
+    <a href="index.html" class="back-link">← Retour à l'éditeur</a>
+    <div id="fps" class="fps-counter">FPS: 0</div>
+
+    <div class="emulator-container">
+        <div class="header">
+            <h1>🎮 KodLab</h1>
+            <p>Émulateur de jeux</p>
+        </div>
+
+        <div class="controls">
+            <button id="importBtn" class="btn">💾 Charger un fichier .kod</button>
+            <button id="runBtn" class="btn" disabled>▶️ Jouer</button>
+            <button id="stopBtn" class="btn btn-secondary">⏹️ Arrêter</button>
+            <input type="file" id="fileInput" accept=".kod" style="display: none;">
+        </div>
+
+        <div id="gameStatus" class="status info">
+            Chargez un fichier .kod pour commencer
+        </div>
+
+        <div class="canvas-container">
+            <canvas id="gameCanvas" width="400" height="300"></canvas>
+        </div>
+
+        <div class="game-info">
+            <p><strong>1.</strong> Cliquez sur "📁 Charger un fichier .kod" pour sélectionner un jeu</p>
+            <p><strong>2.</strong> Cliquez sur "▶️ Jouer" pour démarrer le jeu</p>
+            <p><strong>Contrôles :</strong> Flèches directionnelles + Espace</p>
+            <p><strong>Astuce :</strong> F5 pour relancer le jeu, F11 pour le plein écran</p>
+        </div>
+    </div>
+
+    <script src="kodCompiler.js"></script>
+    <script src="kodEmulator.js"></script>
+    <script>
+        // Application émulateur standalone
+        class EmulatorApp {
+            constructor() {
+                this.compiledCode = null;
+                this.currentFileName = '';
+                
+                this.initializeEmulator();
+                this.setupEventListeners();
+            }
+
+            initializeEmulator() {
+                kodEmulator = new KodEmulator('gameCanvas');
+                this.updateStatus('info', 'Émulateur initialisé - Chargez un fichier .kod');
+            }
+
+            setupEventListeners() {
+                document.getElementById('importBtn').addEventListener('click', () => {
+                    document.getElementById('fileInput').click();
+                });
+                
+                document.getElementById('fileInput').addEventListener('change', (e) => {
+                    this.handleFileImport(e);
+                });
+                
+                document.getElementById('runBtn').addEventListener('click', () => {
+                    this.runGame();
+                });
+                
+                document.getElementById('stopBtn').addEventListener('click', () => {
+                    this.stopGame();
+                });
+
+                // Raccourcis clavier
+                document.addEventListener('keydown', (e) => {
+                    if (e.key === 'F5' || (e.ctrlKey && e.key === 'r')) {
+                        e.preventDefault();
+                        if (this.compiledCode) {
+                            this.runGame();
+                        }
+                    }
+                });
+            }
+
+            handleFileImport(event) {
+                const file = event.target.files[0];
+                if (!file) return;
+                
+                if (!file.name.endsWith('.kod')) {
+                    this.updateStatus('error', '❌ Veuillez sélectionner un fichier .kod');
+                    return;
+                }
+                
+                this.updateStatus('info', `Chargement de ${file.name}...`);
+                
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const kodCode = e.target.result;
+                    this.loadKodCode(kodCode, file.name);
+                };
+                reader.onerror = () => {
+                    this.updateStatus('error', '❌ Erreur lors de la lecture du fichier');
+                };
+                reader.readAsText(file);
+            }
+
+            loadKodCode(kodCode, fileName) {
+                try {
+                    // Compile le code
+                    const result = kodCompiler.compile(kodCode);
+                    
+                    if (result.success) {
+                        this.compiledCode = result.code;
+                        this.currentFileName = fileName;
+                        this.updateStatus('success', `✅ Jeu chargé: ${fileName}`);
+                        document.getElementById('runBtn').disabled = false;
+                    } else {
+                        throw new Error(`Erreur de compilation: ${result.error}`);
+                    }
+                    
+                } catch (error) {
+                    this.updateStatus('error', `❌ ${error.message}`);
+                    this.compiledCode = null;
+                    document.getElementById('runBtn').disabled = true;
+                }
+            }
+
+            runGame() {
+                if (!this.compiledCode) {
+                    this.updateStatus('error', 'Aucun jeu chargé');
+                    return;
+                }
+
+                try {
+                    // Charge le jeu dans l'émulateur
+                    const loadResult = kodEmulator.loadGame(this.compiledCode);
+                    
+                    if (loadResult.success) {
+                        // Démarre le jeu
+                        if (kodEmulator.start()) {
+                            this.updateStatus('success', `🎮 ${this.currentFileName} en cours...`);
+                            document.getElementById('runBtn').disabled = true;
+                        } else {
+                            throw new Error('Impossible de démarrer le jeu');
+                        }
+                    } else {
+                        throw new Error(loadResult.error);
+                    }
+                    
+                } catch (error) {
+                    this.updateStatus('error', `❌ Erreur: ${error.message}`);
+                }
+            }
+
+            stopGame() {
+                kodEmulator.stop();
+                this.updateStatus('info', 'Jeu arrêté');
+                if (this.compiledCode) {
+                    document.getElementById('runBtn').disabled = false;
+                }
+            }
+
+            updateStatus(type, message) {
+                const statusEl = document.getElementById('gameStatus');
+                statusEl.textContent = message;
+                statusEl.className = `status ${type}`;
+            }
+
+
+        }
+
+        // Initialise l'application émulateur
+        const emulatorApp = new EmulatorApp();
+
+        // Affichage du FPS
+        setInterval(() => {
+            if (kodEmulator && kodEmulator.running) {
+                document.getElementById('fps').textContent = `FPS: ${kodEmulator.fps || 0}`;
+            } else {
+                document.getElementById('fps').textContent = 'FPS: 0';
+            }
+        }, 500);
+    </script>
+</body>
+</html>

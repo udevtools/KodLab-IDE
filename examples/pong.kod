@@ -1,0 +1,143 @@
+// Jeu: Pong Simple
+// Un jeu de ping-pong basique avec IA
+
+// Variables du jeu
+let ballX = 200
+let ballY = 150
+let ballSpeedX = 3
+let ballSpeedY = 2
+let ballSize = 8
+
+// Raquette joueur (gauche)
+let playerY = 120
+let playerHeight = 60
+let playerWidth = 10
+let playerSpeed = 4
+
+// Raquette IA (droite)
+let aiY = 120
+let aiHeight = 60
+let aiWidth = 10
+let aiSpeed = 2.5
+
+// Score
+let playerScore = 0
+let aiScore = 0
+
+function start()
+    clearScreen("#000000")
+end
+
+function update()
+    // Efface l'écran
+    clearScreen("#001100")
+    
+    // === CONTRÔLES JOUEUR ===
+    if isKeyPressed("up")
+        playerY = playerY - playerSpeed
+    end
+    if isKeyPressed("down")
+        playerY = playerY + playerSpeed
+    end
+    
+    // Limite la raquette du joueur
+    if playerY < 0
+        playerY = 0
+    end
+    if playerY > 240
+        playerY = 240
+    end
+    
+    // === IA SIMPLE ===
+    // L'IA suit la balle
+    let aiCenter = aiY + aiHeight / 2
+    if ballY < aiCenter - 10
+        aiY = aiY - aiSpeed
+    end
+    if ballY > aiCenter + 10
+        aiY = aiY + aiSpeed
+    end
+    
+    // Limite la raquette de l'IA
+    if aiY < 0
+        aiY = 0
+    end
+    if aiY > 240
+        aiY = 240
+    end
+    
+    // === PHYSIQUE DE LA BALLE ===
+    ballX = ballX + ballSpeedX
+    ballY = ballY + ballSpeedY
+    
+    // Rebond haut/bas
+    if ballY <= 0 || ballY >= 300
+        ballSpeedY = -ballSpeedY
+    end
+    
+    // === COLLISIONS RAQUETTES ===
+    // Raquette joueur
+    if ballX <= 20 && ballY >= playerY && ballY <= playerY + playerHeight
+        ballSpeedX = -ballSpeedX
+        ballX = 21
+    end
+    
+    // Raquette IA
+    if ballX >= 370 && ballY >= aiY && ballY <= aiY + aiHeight
+        ballSpeedX = -ballSpeedX
+        ballX = 369
+    end
+    
+    // === POINTS ===
+    if ballX < 0
+        aiScore = aiScore + 1
+        ballX = 200
+        ballY = 150
+        ballSpeedX = 3
+    end
+    
+    if ballX > 400
+        playerScore = playerScore + 1
+        ballX = 200
+        ballY = 150
+        ballSpeedX = -3
+    end
+    
+    // === AFFICHAGE ===
+    // Ligne centrale
+    drawRect(198, 0, 4, 300, "#333333")
+    
+    // Raquettes
+    drawRect(10, playerY, playerWidth, playerHeight, "#00FF00")
+    drawRect(380, aiY, aiWidth, aiHeight, "#FF0000")
+    
+    // Balle
+    drawCircle(ballX, ballY, ballSize, "#FFFFFF")
+    
+    // Score
+    drawText("Joueur: " + playerScore, 80, 30, "#00FF00")
+    drawText("IA: " + aiScore, 300, 30, "#FF0000")
+    
+    // Instructions
+    if playerScore == 0 && aiScore == 0
+    end
+    
+    // Victoire
+    if playerScore >= 5
+        drawText("VICTOIRE!", 200, 150, "#00FF00")
+        drawText("Appuyez sur Espace pour continuer", 180, 170, "#FFFFFF")
+        if isKeyPressed("space")
+            playerScore = 0
+            aiScore = 0
+        end
+    end
+    
+    if aiScore >= 5
+        drawText("DÉFAITE!", 200, 150, "#FF0000")
+        drawText("Appuyez sur Espace pour recommencer", 170, 170, "#FFFFFF")
+        if isKeyPressed("space")
+            playerScore = 0
+            aiScore = 0
+        end
+    end
+end

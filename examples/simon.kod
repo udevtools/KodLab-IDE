@@ -1,0 +1,242 @@
+// Jeu: Simon Musical - Mémorisation de séquences sonores
+// Un jeu de mémoire avec des sons et couleurs
+
+let gameState = "menu"  // "menu", "show", "input", "gameover"
+let sequence = []
+let playerSequence = []
+let currentStep = 0
+let showStep = 0
+let score = 0
+let level = 1
+
+// Couleurs et sons pour chaque bouton
+let buttonColors = ["#FF0000", "#00FF00", "#0000FF", "#FFFF00"]  // Rouge, Vert, Bleu, Jaune
+let buttonSounds = ["do", "re", "mi", "fa"]
+let buttonPressed = -1
+let buttonTimer = 0
+
+// État du jeu
+let stateTimer = 0
+let keyPressed = false
+
+function start()
+    clearScreen("#001122")
+    generateNewSequence()
+end
+
+function update()
+    stateTimer = stateTimer + 1
+    
+    if gameState == "menu"
+        updateMenu()
+    else if gameState == "show"
+        updateShow()
+    else if gameState == "input"
+        updateInput()
+    else if gameState == "gameover"
+        updateGameOver()
+    end
+    
+    // Décrémenter le timer du bouton pressé
+    if buttonTimer > 0
+        buttonTimer = buttonTimer - 1
+        if buttonTimer <= 0
+            buttonPressed = -1
+        end
+    end
+end
+
+function updateMenu()
+    clearScreen("#001122")
+    
+    drawText("SIMON MUSICAL", 120, 80, "#FFFFFF")
+    drawText("Mémorisez la séquence!", 90, 100, "#CCCCCC")
+    drawText("Niveau: " + level, 250, 90, "#FFFF00")
+    
+    if (stateTimer / 30) % 2 < 1  // Clignotement
+        drawText("Appuyez sur ESPACE", 110, 200, "#FFFFFF")
+    end
+    
+    drawButtons()
+    
+    if isKeyPressed("space") && !keyPressed
+        gameState = "show"
+        stateTimer = 0
+        showStep = 0
+        keyPressed = true
+    end
+    
+    resetKeyState()
+end
+
+function updateShow()
+    clearScreen("#001122")
+    
+    drawText("SIMON MUSICAL", 120, 40, "#FFFFFF")
+    drawText("Mémorisez cette séquence:", 100, 60, "#CCCCCC")
+    drawText("Étape " + (showStep + 1) + " / " + sequence.length, 140, 80, "#FFFF00")
+    
+    drawButtons()
+    
+    // Afficher la séquence progressivement
+    if stateTimer >= 60  // Pause de 1 seconde entre chaque note
+        if showStep < sequence.length
+            // Allumer le bouton et jouer le son
+            buttonPressed = sequence[showStep]
+            buttonTimer = 30  // Durée d'affichage du bouton
+            playSound(buttonSounds[sequence[showStep]], 0.4)
+            
+            showStep = showStep + 1
+            stateTimer = 0
+        else
+            // Séquence terminée, passer à la saisie
+            gameState = "input"
+            stateTimer = 0
+            currentStep = 0
+            playerSequence = []
+        end
+    end
+end
+
+function updateInput()
+    clearScreen("#001122")
+    
+    drawText("SIMON MUSICAL", 120, 30, "#FFFFFF")
+    drawText("Répétez la séquence:", 100, 60, "#CCCCCC")
+    drawText("Étape " + (currentStep + 1) + " / " + sequence.length, 140, 80, "#FFFF00")
+    
+    drawButtons()
+    
+    // Gestion des entrées pour les 4 boutons
+    let inputButton = -1
+    
+    if isKeyPressed("left") && !keyPressed  // Bouton 0 (rouge)
+        inputButton = 0
+        keyPressed = true
+    else if isKeyPressed("up") && !keyPressed  // Bouton 1 (vert)  
+        inputButton = 1
+        keyPressed = true
+    else if isKeyPressed("right") && !keyPressed  // Bouton 2 (bleu)
+        inputButton = 2
+        keyPressed = true
+    else if isKeyPressed("down") && !keyPressed  // Bouton 3 (jaune)
+        inputButton = 3
+        keyPressed = true
+    end
+    
+    if inputButton >= 0
+        // Jouer le son et allumer le bouton
+        playSound(buttonSounds[inputButton], 0.3)
+        buttonPressed = inputButton
+        buttonTimer = 20
+        
+        // Vérifier si c'est correct
+        if inputButton == sequence[currentStep]
+            currentStep = currentStep + 1
+            
+            // Séquence complète réussie
+            if currentStep >= sequence.length
+                score = score + (level * 10)
+                level = level + 1
+                generateNewSequence()
+                gameState = "menu"
+                stateTimer = 0
+                
+                // Son de victoire
+                playSound("do", 0.2)
+                playSound("mi", 0.2)
+                playSound("sol", 0.4)
+            end
+        else
+            // Erreur - Game Over
+            gameState = "gameover"
+            stateTimer = 0
+            playSound("si", 0.5)  // Son d'erreur
+        end
+    end
+    
+    resetKeyState()
+end
+
+function updateGameOver()
+    clearScreen("#330000")
+    
+    drawText("GAME OVER", 140, 100, "#FF0000")
+    drawText("Score Final: " + score, 130, 140, "#FFFFFF")
+    drawText("Niveau Atteint: " + (level - 1), 120, 160, "#FFFF00")
+    
+    if (stateTimer / 40) % 2 < 1
+        drawText("ESPACE pour recommencer", 90, 200, "#CCCCCC")
+    end
+    
+    if isKeyPressed("space") && !keyPressed
+        // Reset du jeu
+        score = 0
+        level = 1
+        gameState = "menu"
+        stateTimer = 0
+        generateNewSequence()
+        keyPressed = true
+    end
+    
+    resetKeyState()
+end
+
+function drawButtons()
+    // Bouton 0 : Rouge (Gauche)
+    let color0 = buttonColors[0]
+    if buttonPressed == 0
+        color0 = "#FFFFFF"  // Blanc quand pressé
+    end
+    drawRect(50, 120, 60, 60, color0)
+    drawText("←", 75, 155, "#000000")
+    
+    // Bouton 1 : Vert (Haut)
+    let color1 = buttonColors[1] 
+    if buttonPressed == 1
+        color1 = "#FFFFFF"
+    end
+    drawRect(150, 120, 60, 60, color1)
+    drawText("↑", 175, 155, "#000000")
+    
+    // Bouton 2 : Bleu (Droite)
+    let color2 = buttonColors[2]
+    if buttonPressed == 2
+        color2 = "#FFFFFF"
+    end
+    drawRect(250, 120, 60, 60, color2)
+    drawText("→", 275, 155, "#000000")
+    
+    // Bouton 3 : Jaune (Bas)
+    let color3 = buttonColors[3]
+    if buttonPressed == 3
+        color3 = "#FFFFFF"
+    end
+    drawRect(350, 120, 60, 60, color3)
+    drawText("↓", 375, 155, "#000000")
+    
+    // Instructions
+    drawText("Utilisez les flèches directionnelles", 150, 250, "#CCCCCC")
+    drawText("Score: " + score, 40, 20, "#FFFFFF")
+end
+
+function generateNewSequence()
+    sequence = []
+    
+    // Générer une séquence aléatoire de longueur = niveau + 2
+    let sequenceLength = level + 2
+    if sequenceLength > 8  // Maximum 8 étapes
+        sequenceLength = 8
+    end
+    
+    for i = 0 to sequenceLength - 1
+        let randomButton = (score + i * 7 + level * 3) % 4  // Pseudo-aléatoire
+        sequence[i] = randomButton
+    end
+end
+
+function resetKeyState()
+    if !isKeyPressed("left") && !isKeyPressed("right") && !isKeyPressed("up") && !isKeyPressed("down") && !isKeyPressed("space")
+        keyPressed = false
+    end
+end

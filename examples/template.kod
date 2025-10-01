@@ -1,0 +1,150 @@
+// TEMPLATE MINIMAL - Base pour créer un jeu
+// Copiez ce template et modifiez-le selon vos besoins
+
+// === VARIABLES DU JEU ===
+// Définissez ici vos variables globales
+let playerX = 200
+let playerY = 150
+let score = 0
+let gameState = "playing"  // "playing", "paused", "gameover", "win"
+
+// === FONCTION DE DÉMARRAGE ===
+// Appelée une seule fois au lancement du jeu
+function start()
+    clearScreen("#001122")
+    // Initialisations supplémentaires ici
+end
+
+// === BOUCLE PRINCIPALE ===
+// Appelée à chaque frame (~60 fois par seconde)
+function update()
+    // Gestion des états du jeu
+    if gameState == "playing"
+        handleInput()
+        updateGame()
+        drawGame()
+    end
+    
+    if gameState == "gameover"
+        drawGameOver()
+        if isKeyPressed("space")
+            restart()
+        end
+    end
+end
+
+// === GESTION DES CONTRÔLES ===
+function handleInput()
+    // Mouvement du joueur
+    if isKeyPressed("left")
+        playerX = playerX - 3
+    end
+    if isKeyPressed("right")
+        playerX = playerX + 3
+    end
+    if isKeyPressed("up")
+        playerY = playerY - 3
+    end
+    if isKeyPressed("down")
+        playerY = playerY + 3
+    end
+    
+    // Action spéciale
+    if isKeyPressed("space")
+        // Ajoutez votre action ici (tirer, sauter, etc.)
+    end
+end
+
+// === LOGIQUE DU JEU ===
+function updateGame()
+    // Limites de l'écran
+    if playerX < 0
+        playerX = 0
+    end
+    if playerX > 380
+        playerX = 380
+    end
+    if playerY < 0
+        playerY = 0
+    end
+    if playerY > 280
+        playerY = 280
+    end
+    
+    // Ajoutez ici votre logique :
+    // - Mouvement des ennemis
+    // - Détection de collisions
+    // - Mise à jour du score
+    // - Conditions de victoire/défaite
+end
+
+// === AFFICHAGE ===
+function drawGame()
+    // Efface l'écran
+    clearScreen("#001122")
+    
+    // Dessine le joueur
+    drawRect(playerX, playerY, 20, 20, "#00FF00")
+    
+    // Dessine l'interface
+    drawText("Score: " + score, 60, 20, "#FFFFFF")
+    drawText("Flèches: Bouger", 80, 40, "#CCCCCC")
+    
+    // Ajoutez ici vos éléments :
+    // - Ennemis
+    // - Collectibles
+    // - Décors
+    // - Effets visuels
+end
+
+// === ÉCRAN DE FIN ===
+function drawGameOver()
+    clearScreen("#220000")
+    drawText("GAME OVER", 200, 120, "#FF0000")
+    drawText("Score final: " + score, 200, 150, "#FFFFFF")
+    drawText("Appuyez sur ESPACE pour recommencer", 200, 180, "#CCCCCC")
+end
+
+// === REDÉMARRAGE ===
+function restart()
+    // Remet les variables à leur état initial
+    playerX = 200
+    playerY = 150
+    score = 0
+    gameState = "playing"
+    
+    // Réinitialisez ici vos autres variables :
+    // - Position des ennemis
+    // - État des power-ups
+    // - Timers, etc.
+end
+
+// === FONCTIONS UTILITAIRES ===
+// Ajoutez ici vos fonctions personnalisées
+
+function checkCollision(x1, y1, w1, h1, x2, y2, w2, h2)
+    // Détection de collision entre deux rectangles
+    if x1 < x2 + w2 && x1 + w1 > x2 && y1 < y2 + h2 && y1 + h1 > y2
+        return 1
+    end
+    return 0
+end
+
+function playNote(note)
+    // Joue un son selon l'état du jeu
+    playSound(note, 0.2)
+end
+
+// === CONSEILS POUR DÉVELOPPER ===
+// 1. Commencez par modifier les variables et les constantes
+// 2. Ajoutez vos éléments dans drawGame()
+// 3. Programmez la logique dans updateGame()
+// 4. Testez fréquemment avec de petites modifications
+// 5. Utilisez les fonctions utilitaires pour éviter la répétition
+
+// === IDÉES DE JEUX SIMPLES ===
+// - Collecteur : Ramasser des objets qui tombent
+// - Esquive : Éviter des obstacles qui arrivent
+// - Tir : Détruire des cibles qui apparaissent
+// - Labyrinthe : Naviguer vers une sortie
+// - Plateforme : Sauter sur des plateformes

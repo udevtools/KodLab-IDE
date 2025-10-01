@@ -1,0 +1,215 @@
+// SOKOBAN - POC simple
+// Grille, murs, caisses, cibles. Flèches pour bouger. ESPACE pour reset.
+
+let tile = 32
+let gw = 10
+let gh = 9
+
+// Map codes: 0=floor, 1=wall, 2=goal
+let map = [[1,1,1,1,1,1,1,1,1,1],[1,0,0,0,0,0,0,0,0,1],[1,0,0,2,0,0,0,0,0,1],[1,0,0,0,1,1,0,0,0,1],[1,0,0,0,1,0,0,0,0,1],[1,0,0,0,0,0,0,2,0,1],[1,0,0,0,0,0,0,0,0,1],[1,0,0,0,0,0,0,0,0,1],[1,1,1,1,1,1,1,1,1,1]]
+
+// Boxes as parallel arrays
+let bx = [3,5]
+let by = [3,5]
+
+let px = 2
+let py = 2
+
+let gameState = "playing"
+let moveCd = 0
+let moveCount = 0
+let particles = []
+let particleCount = 0
+
+function update()
+    if gameState == "playing"
+        if moveCd > 0
+            moveCd = moveCd - 1
+        end
+        handleInput()
+        updateParticles()
+        drawWorld()
+        drawBoxes()
+        drawPlayer()
+        drawParticles()
+        drawUI()
+        if checkWin()
+            gameState = "win"
+            playSound("sol", 0.5)
+        end
+    else
+        drawWorld()
+        drawBoxes()
+        drawPlayer()
+        if gameState == "win"
+                drawWin()
+                if isKeyPressed("space")
+                    restart()
+                end
+            end
+    end
+end
+
+function handleInput()
+    if moveCd > 0
+        // waiting between moves
+        return
+    end
+    moved = 0
+    if isKeyPressed("left")
+        moved = tryMove(-1,0)
+    end
+    if moved == 0 && isKeyPressed("right")
+        moved = tryMove(1,0)
+    end
+    if moved == 0 && isKeyPressed("up")
+        moved = tryMove(0,-1)
+    end
+    if moved == 0 && isKeyPressed("down")
+        moved = tryMove(0,1)
+    end
+    if moved == 1
+        moveCd = 12
+        moveCount = moveCount + 1
+        playSound("do", 0.1)
+    end
+    if isKeyPressed("space")
+        restart()
+    end
+end
+
+function tryMove(dx,dy)
+    tx = px + dx
+    ty = py + dy
+    // wall?
+    if map[ty][tx] == 1
+        return 0
+    end
+    // find box at target (inline to avoid compiler return-i bug)
+    bi = -1
+    for index = 0 to (bx.length - 1)
+        if bx[index] == tx && by[index] == ty
+            bi = index
+            break
+        end
+    end
+    if bi == -1
+        // free -> move player
+        px = tx
+        py = ty
+        return 1
+    end
+    // one box -> attempt push
+    nx = tx + dx
+    ny = ty + dy
+    // blocked by wall?
+    if map[ny][nx] == 1
+        return 0
+    end
+    // blocked by another box?
+    for jindex = 0 to (bx.length - 1)
+        if bx[jindex] == nx && by[jindex] == ny
+            return 0
+        end
+    end
+    // push
+    bx[bi] = nx
+    by[bi] = ny
+    px = tx
+    py = ty
+    playSound("re", 0.2)
+    addParticle(nx * tile + tile/2, ny * tile + tile/2)
+    return 1
+end
+
+// boxIndexAt removed (inlined in tryMove)
+
+function checkWin()
+    for index = 0 to (bx.length - 1)
+        gx = bx[index]
+        gy = by[index]
+        if map[gy][gx] != 2
+            return 0
+        end
+    end
+    return 1
+end
+
+function drawWorld()
+    clearScreen("#444")
+    for yPos = 0 to (gh - 1)
+        for xPos = 0 to (gw - 1)
+            vx = xPos * tile
+            vy = yPos * tile
+            if map[yPos][xPos] == 1
+                drawRect(vx, vy, tile, tile, "#444")
+            else
+                drawRect(vx, vy, tile, tile, "#fff")
+            end
+            if map[yPos][xPos] == 2
+                // goal marker
+                drawCircle(vx + tile/2, vy + tile/2, tile/4, "#a6e22e")
+            end
+        end
+    end
+end
+
+function drawBoxes()
+    for index = 0 to (bx.length - 1)
+        boxColor = "#b87333"
+        // Si la caisse est sur un objectif, la colorer différemment
+        if map[by[index]][bx[index]] == 2
+            boxColor = "#8fbc8f"
+        end
+        drawRect(bx[index] * tile + 4, by[index] * tile + 4, tile - 8, tile - 8, boxColor)
+    end
+end
+
+function drawPlayer()
+    drawRect(px * tile + 6, py * tile + 6, tile - 12, tile - 12, "#1e88e5")
+end
+
+function drawWin()
+    drawText("Bravo !", 200, 240, "#000")
+    drawText("Mouvements: " + moveCount, 200, 260, "#000")
+end
+
+function drawUI()
+    drawText("Mouvements: " + moveCount, 70, 15, "#000")
+    drawText("Espace = Reset", 330, 15, "#000")
+end
+
+function addParticle(x, y)
+    if particleCount < 10
+        particleCount = particleCount + 1
+    end
+end
+
+function updateParticles()
+    if particleCount > 0
+        particleCount = particleCount - 1
+        if particleCount < 0
+            particleCount = 0
+        end
+    end
+end
+
+function drawParticles()
+    if particleCount > 0
+        // Effet visuel simple : étoiles autour du joueur
+        sparkleX = px * tile + random(-10, 10)
+        sparkleY = py * tile + random(-10, 10)
+        drawCircle(sparkleX, sparkleY, 3, "#ffff00")
+    end
+end
+
+function restart()
+    // reset positions
+    bx = [3,5]
+    by = [3,5]
+    px = 2
+    py = 2
+    gameState = "playing"
+    moveCount = 0
+    particleCount = 0
+end

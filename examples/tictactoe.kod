@@ -1,0 +1,612 @@
+// === TIC TAC TOE ===
+// Jeu classique du morpion contre l'IA
+// Utilisez les flèches pour vous déplacer et Espace pour jouer
+
+// Variables globales - grille 3x3 (0=vide, 1=X joueur, 2=O IA)
+let grille1 = 0
+let grille2 = 0  
+let grille3 = 0
+let grille4 = 0
+let grille5 = 0
+let grille6 = 0
+let grille7 = 0
+let grille8 = 0
+let grille9 = 0
+
+// Position: 1 2 3
+//          4 5 6  
+//          7 8 9
+
+let curseurX = 1
+let curseurY = 1
+let joueurActuel = 1
+let jeuTermine = false
+let gagnant = 0
+let messageTexte = "Flèches pour bouger, Espace pour jouer"
+let tailleCellule = 70
+let decalageX = 65
+let decalageY = 50
+let compteurIA = 0
+let positionJoueur = 0
+let positionIA = 0
+let coupJoue = false
+let casesVides = 0
+let delaiTouche = 0
+
+function start()
+    clearScreen("#001122")
+end
+
+function update()
+    clearScreen("#001122")
+    
+    // Dessiner le titre
+    drawText("TIC TAC TOE", 200, 20, "#FFFFFF")
+    
+    // Dessiner la grille
+    dessinerGrille()
+    
+    // Dessiner les X et O
+    dessinerSymboles()
+    
+    // Dessiner le curseur
+    if !jeuTermine
+        curseurPosX = decalageX + (curseurX - 1) * tailleCellule + tailleCellule / 2
+        curseurPosY = decalageY + (curseurY - 1) * tailleCellule + tailleCellule / 2
+        drawRect(curseurPosX - 35, curseurPosY - 35, 70, 70, "#FFFF00")
+        drawRect(curseurPosX - 33, curseurPosY - 33, 66, 66, "#001122")
+    end
+    
+    // Afficher le message
+    drawText(messageTexte, 200, 280, "#FFFF00")
+    
+    // Gestion des contrôles si le jeu n'est pas terminé
+    if !jeuTermine && joueurActuel == 1
+        gererControles()
+    end
+    
+    // Tour de l'IA après un petit délai
+    if !jeuTermine && joueurActuel == 2
+        tourIA()
+    end
+    
+    // Vérifier fin de jeu
+    verifierFinJeu()
+end
+
+function dessinerGrille()
+    // Lignes horizontales
+    drawRect(decalageX, decalageY + tailleCellule, tailleCellule * 3, 2, "#FFFFFF")
+    drawRect(decalageX, decalageY + tailleCellule * 2, tailleCellule * 3, 2, "#FFFFFF")
+    
+    // Lignes verticales
+    drawRect(decalageX + tailleCellule, decalageY, 2, tailleCellule * 3, "#FFFFFF")
+    drawRect(decalageX + tailleCellule * 2, decalageY, 2, tailleCellule * 3, "#FFFFFF")
+end
+
+function dessinerSymboles()
+    // Case 1
+    if grille1 == 1
+        dessinerX(decalageX + 35, decalageY + 35)
+    end
+    if grille1 == 2
+        dessinerO(decalageX + 35, decalageY + 35)
+    end
+    
+    // Case 2
+    if grille2 == 1
+        dessinerX(decalageX + 105, decalageY + 35)
+    end
+    if grille2 == 2
+        dessinerO(decalageX + 105, decalageY + 35)
+    end
+    
+    // Case 3
+    if grille3 == 1
+        dessinerX(decalageX + 175, decalageY + 35)
+    end
+    if grille3 == 2
+        dessinerO(decalageX + 175, decalageY + 35)
+    end
+    
+    // Case 4
+    if grille4 == 1
+        dessinerX(decalageX + 35, decalageY + 105)
+    end
+    if grille4 == 2
+        dessinerO(decalageX + 35, decalageY + 105)
+    end
+    
+    // Case 5
+    if grille5 == 1
+        dessinerX(decalageX + 105, decalageY + 105)
+    end
+    if grille5 == 2
+        dessinerO(decalageX + 105, decalageY + 105)
+    end
+    
+    // Case 6
+    if grille6 == 1
+        dessinerX(decalageX + 175, decalageY + 105)
+    end
+    if grille6 == 2
+        dessinerO(decalageX + 175, decalageY + 105)
+    end
+    
+    // Case 7
+    if grille7 == 1
+        dessinerX(decalageX + 35, decalageY + 175)
+    end
+    if grille7 == 2
+        dessinerO(decalageX + 35, decalageY + 175)
+    end
+    
+    // Case 8
+    if grille8 == 1
+        dessinerX(decalageX + 105, decalageY + 175)
+    end
+    if grille8 == 2
+        dessinerO(decalageX + 105, decalageY + 175)
+    end
+    
+    // Case 9
+    if grille9 == 1
+        dessinerX(decalageX + 175, decalageY + 175)
+    end
+    if grille9 == 2
+        dessinerO(decalageX + 175, decalageY + 175)
+    end
+end
+
+function dessinerX(centreX, centreY)
+    // Deux lignes qui se croisent pour former un X symétrique
+    index = -20
+    while index <= 20
+        // Diagonale de haut-gauche vers bas-droite
+        drawRect(centreX + index, centreY + index, 3, 3, "#FF0000")
+        // Diagonale de haut-droite vers bas-gauche
+        drawRect(centreX - index, centreY + index, 3, 3, "#FF0000")
+        index = index + 2
+    end
+end
+
+function dessinerO(centreX, centreY)
+    // Cercle simplifié avec des rectangles
+    drawRect(centreX - 15, centreY - 20, 30, 3, "#00FF00")
+    drawRect(centreX - 15, centreY + 17, 30, 3, "#00FF00")
+    drawRect(centreX - 20, centreY - 15, 3, 30, "#00FF00")
+    drawRect(centreX + 17, centreY - 15, 3, 30, "#00FF00")
+    
+    drawRect(centreX - 12, centreY - 17, 6, 2, "#00FF00")
+    drawRect(centreX + 6, centreY - 17, 6, 2, "#00FF00")
+    drawRect(centreX - 12, centreY + 15, 6, 2, "#00FF00")
+    drawRect(centreX + 6, centreY + 15, 6, 2, "#00FF00")
+end
+
+function gererControles()
+    // Gestion du délai pour les touches
+    if delaiTouche > 0
+        delaiTouche = delaiTouche - 1
+    end
+    
+    // Déplacement du curseur avec délai
+    if delaiTouche == 0
+        if isKeyPressed("left")
+            if curseurX > 1
+                curseurX = curseurX - 1
+                delaiTouche = 10
+            end
+        end
+        if isKeyPressed("right")
+            if curseurX < 3
+                curseurX = curseurX + 1
+                delaiTouche = 10
+            end
+        end
+        if isKeyPressed("up")
+            if curseurY > 1
+                curseurY = curseurY - 1
+                delaiTouche = 10
+            end
+        end
+        if isKeyPressed("down")
+            if curseurY < 3
+                curseurY = curseurY + 1
+                delaiTouche = 10
+            end
+        end
+    end
+    
+    // Placer un X avec Espace
+    if isKeyPressed("space")
+        // Vérifier et placer directement selon la position
+        if curseurX == 1 && curseurY == 1 && grille1 == 0
+            grille1 = 1
+            joueurActuel = 2
+            messageTexte = "Tour de l'ordinateur..."
+        end
+        if curseurX == 2 && curseurY == 1 && grille2 == 0
+            grille2 = 1
+            joueurActuel = 2
+            messageTexte = "Tour de l'ordinateur..."
+        end
+        if curseurX == 3 && curseurY == 1 && grille3 == 0
+            grille3 = 1
+            joueurActuel = 2
+            messageTexte = "Tour de l'ordinateur..."
+        end
+        if curseurX == 1 && curseurY == 2 && grille4 == 0
+            grille4 = 1
+            joueurActuel = 2
+            messageTexte = "Tour de l'ordinateur..."
+        end
+        if curseurX == 2 && curseurY == 2 && grille5 == 0
+            grille5 = 1
+            joueurActuel = 2
+            messageTexte = "Tour de l'ordinateur..."
+        end
+        if curseurX == 3 && curseurY == 2 && grille6 == 0
+            grille6 = 1
+            joueurActuel = 2
+            messageTexte = "Tour de l'ordinateur..."
+        end
+        if curseurX == 1 && curseurY == 3 && grille7 == 0
+            grille7 = 1
+            joueurActuel = 2
+            messageTexte = "Tour de l'ordinateur..."
+        end
+        if curseurX == 2 && curseurY == 3 && grille8 == 0
+            grille8 = 1
+            joueurActuel = 2
+            messageTexte = "Tour de l'ordinateur..."
+        end
+        if curseurX == 3 && curseurY == 3 && grille9 == 0
+            grille9 = 1
+            joueurActuel = 2
+            messageTexte = "Tour de l'ordinateur..."
+        end
+    end
+end
+
+function tourIA()
+    compteurIA = compteurIA + 1
+    
+    // Petit délai pour l'IA
+    if compteurIA > 45
+        compteurIA = 0
+        
+        // Stratégie simple
+        coupJoue = false
+        
+        // 1. Essayer de gagner
+        if !coupJoue
+            coupJoue = essayerGagner(2)
+        end
+        
+        // 2. Bloquer le joueur
+        if !coupJoue
+            coupJoue = essayerGagner(1)
+        end
+        
+        // 3. Jouer au centre (case 5)
+        if !coupJoue
+            if grille5 == 0
+                grille5 = 2
+                coupJoue = true
+            end
+        end
+        
+        // 4. Jouer dans un coin
+        if !coupJoue
+            if grille1 == 0
+                grille1 = 2
+                coupJoue = true
+            end
+            if !coupJoue
+                if grille3 == 0
+                    grille3 = 2
+                    coupJoue = true
+                end
+            end
+            if !coupJoue
+                if grille7 == 0
+                    grille7 = 2
+                    coupJoue = true
+                end
+            end
+            if !coupJoue
+                if grille9 == 0
+                    grille9 = 2
+                    coupJoue = true
+                end
+            end
+        end
+        
+        // 5. Jouer n'importe où
+        if !coupJoue
+            if grille2 == 0
+                grille2 = 2
+                coupJoue = true
+            end
+            if !coupJoue && grille4 == 0
+                grille4 = 2
+                coupJoue = true
+            end
+            if !coupJoue && grille6 == 0
+                grille6 = 2
+                coupJoue = true
+            end
+            if !coupJoue && grille8 == 0
+                grille8 = 2
+                coupJoue = true
+            end
+        end
+        
+        joueurActuel = 1
+        messageTexte = "Votre tour - Flèches + Espace"
+    end
+end
+
+function essayerGagner(joueur)
+    // Ligne 1: cases 1,2,3
+    if grille1 == joueur && grille2 == joueur && grille3 == 0
+        grille3 = 2
+        return true
+    end
+    if grille1 == joueur && grille3 == joueur && grille2 == 0
+        grille2 = 2
+        return true
+    end
+    if grille2 == joueur && grille3 == joueur && grille1 == 0
+        grille1 = 2
+        return true
+    end
+    
+    // Ligne 2: cases 4,5,6
+    if grille4 == joueur && grille5 == joueur && grille6 == 0
+        grille6 = 2
+        return true
+    end
+    if grille4 == joueur && grille6 == joueur && grille5 == 0
+        grille5 = 2
+        return true
+    end
+    if grille5 == joueur && grille6 == joueur && grille4 == 0
+        grille4 = 2
+        return true
+    end
+    
+    // Ligne 3: cases 7,8,9
+    if grille7 == joueur && grille8 == joueur && grille9 == 0
+        grille9 = 2
+        return true
+    end
+    if grille7 == joueur && grille9 == joueur && grille8 == 0
+        grille8 = 2
+        return true
+    end
+    if grille8 == joueur && grille9 == joueur && grille7 == 0
+        grille7 = 2
+        return true
+    end
+    
+    // Colonne 1: cases 1,4,7
+    if grille1 == joueur && grille4 == joueur && grille7 == 0
+        grille7 = 2
+        return true
+    end
+    if grille1 == joueur && grille7 == joueur && grille4 == 0
+        grille4 = 2
+        return true
+    end
+    if grille4 == joueur && grille7 == joueur && grille1 == 0
+        grille1 = 2
+        return true
+    end
+    
+    // Colonne 2: cases 2,5,8
+    if grille2 == joueur && grille5 == joueur && grille8 == 0
+        grille8 = 2
+        return true
+    end
+    if grille2 == joueur && grille8 == joueur && grille5 == 0
+        grille5 = 2
+        return true
+    end
+    if grille5 == joueur && grille8 == joueur && grille2 == 0
+        grille2 = 2
+        return true
+    end
+    
+    // Colonne 3: cases 3,6,9
+    if grille3 == joueur && grille6 == joueur && grille9 == 0
+        grille9 = 2
+        return true
+    end
+    if grille3 == joueur && grille9 == joueur && grille6 == 0
+        grille6 = 2
+        return true
+    end
+    if grille6 == joueur && grille9 == joueur && grille3 == 0
+        grille3 = 2
+        return true
+    end
+    
+    // Diagonale 1: cases 1,5,9
+    if grille1 == joueur && grille5 == joueur && grille9 == 0
+        grille9 = 2
+        return true
+    end
+    if grille1 == joueur && grille9 == joueur && grille5 == 0
+        grille5 = 2
+        return true
+    end
+    if grille5 == joueur && grille9 == joueur && grille1 == 0
+        grille1 = 2
+        return true
+    end
+    
+    // Diagonale 2: cases 3,5,7
+    if grille3 == joueur && grille5 == joueur && grille7 == 0
+        grille7 = 2
+        return true
+    end
+    if grille3 == joueur && grille7 == joueur && grille5 == 0
+        grille5 = 2
+        return true
+    end
+    if grille5 == joueur && grille7 == joueur && grille3 == 0
+        grille3 = 2
+        return true
+    end
+    
+    return false
+end
+
+function verifierFinJeu()
+    if jeuTermine
+        return
+    end
+    
+    // Vérifier les lignes
+    if grille1 == grille2
+        if grille2 == grille3
+            if grille1 != 0
+                gagnant = grille1
+                jeuTermine = true
+            end
+        end
+    end
+    if grille4 == grille5
+        if grille5 == grille6
+            if grille4 != 0
+                gagnant = grille4
+                jeuTermine = true
+            end
+        end
+    end
+    if grille7 == grille8
+        if grille8 == grille9
+            if grille7 != 0
+                gagnant = grille7
+                jeuTermine = true
+            end
+        end
+    end
+    
+    // Vérifier les colonnes
+    if grille1 == grille4
+        if grille4 == grille7
+            if grille1 != 0
+                gagnant = grille1
+                jeuTermine = true
+            end
+        end
+    end
+    if grille2 == grille5
+        if grille5 == grille8
+            if grille2 != 0
+                gagnant = grille2
+                jeuTermine = true
+            end
+        end
+    end
+    if grille3 == grille6
+        if grille6 == grille9
+            if grille3 != 0
+                gagnant = grille3
+                jeuTermine = true
+            end
+        end
+    end
+    
+    // Vérifier les diagonales
+    if grille1 == grille5
+        if grille5 == grille9
+            if grille1 != 0
+                gagnant = grille1
+                jeuTermine = true
+            end
+        end
+    end
+    if grille3 == grille5
+        if grille5 == grille7
+            if grille3 != 0
+                gagnant = grille3
+                jeuTermine = true
+            end
+        end
+    end
+    
+    // Vérifier égalité
+    if !jeuTermine
+        casesVides = 0
+        if grille1 == 0
+            casesVides = casesVides + 1
+        end
+        if grille2 == 0
+            casesVides = casesVides + 1
+        end
+        if grille3 == 0
+            casesVides = casesVides + 1
+        end
+        if grille4 == 0
+            casesVides = casesVides + 1
+        end
+        if grille5 == 0
+            casesVides = casesVides + 1
+        end
+        if grille6 == 0
+            casesVides = casesVides + 1
+        end
+        if grille7 == 0
+            casesVides = casesVides + 1
+        end
+        if grille8 == 0
+            casesVides = casesVides + 1
+        end
+        if grille9 == 0
+            casesVides = casesVides + 1
+        end
+        
+        if casesVides == 0
+            gagnant = 3
+            jeuTermine = true
+        end
+    end
+    
+    // Afficher le résultat
+    if jeuTermine
+        if gagnant == 1
+            messageTexte = "VOUS AVEZ GAGNE !"
+        end
+        if gagnant == 2
+            messageTexte = "L'ORDINATEUR GAGNE !"
+        end
+        if gagnant == 3
+            messageTexte = "EGALITE !"
+        end
+    end
+end
+
+// Fonctions helper supprimées - logique intégrée directement
+
+function recommencer()
+    grille1 = 0
+    grille2 = 0
+    grille3 = 0
+    grille4 = 0
+    grille5 = 0
+    grille6 = 0
+    grille7 = 0
+    grille8 = 0
+    grille9 = 0
+    
+    curseurX = 1
+    curseurY = 1
+    jeuTermine = false
+    gagnant = 0
+    joueurActuel = 1
+    compteurIA = 0
+    messageTexte = "Flèches pour bouger, Espace pour jouer"
+end

@@ -1,0 +1,251 @@
+// Jeu: Space Invaders
+// Défendez la Terre contre l'invasion alien !
+
+// Variables du vaisseau
+let playerX = 180
+let playerY = 260
+let playerWidth = 30
+let playerHeight = 20
+
+// Variables des tirs
+let bullets = [false, false, false, false, false]
+let bulletX = [0, 0, 0, 0, 0]
+let bulletY = [0, 0, 0, 0, 0]
+let bulletSpeed = 8
+
+// Variables des aliens (grille 5x3 = 15 aliens)
+let aliens = [true, true, true, true, true, true, true, true, true, true, true, true, true, true, true]
+let alienStartX = 50
+let alienStartY = 20
+let alienSpacing = 45
+let alienRowSpacing = 30
+let alienDirection = 1
+let alienSpeed = 0.5
+let alienDropDistance = 15
+
+// Variables du jeu
+let score = 0
+let lives = 3
+let gameOver = false
+let aliensRemaining = 15
+let shootTimer = 0
+
+function start()
+    clearScreen("#000033")
+    playSound("do", 0.3)
+end
+
+function update()
+    if gameOver
+        showGameOver()
+        return
+    end
+    
+    clearScreen("#000033")
+    handleInput()
+    updateBullets()
+    updateAliens()
+    checkCollisions()
+    drawGame()
+end
+
+function handleInput()
+    // Déplacement du vaisseau
+    if isKeyPressed("left") && playerX > 10
+        playerX = playerX - 4
+    end
+    
+    if isKeyPressed("right") && playerX < 360
+        playerX = playerX + 4
+    end
+    
+    // Tir avec limitation de cadence
+    if shootTimer > 0
+        shootTimer = shootTimer - 1
+    end
+    
+    if isKeyPressed("space") && shootTimer == 0
+        shootBullet()
+        shootTimer = 15
+    end
+end
+
+function shootBullet()
+    // Trouver un slot libre pour la balle
+    for i = 0 to 4
+        if !bullets[i]
+            bullets[i] = true
+            bulletX[i] = playerX + playerWidth / 2
+            bulletY[i] = playerY
+            playSound("re", 0.1)
+            return
+        end
+    end
+end
+
+function updateBullets()
+    for i = 0 to 4
+        if bullets[i]
+            bulletY[i] = bulletY[i] - bulletSpeed
+            
+            // Supprimer si sort de l'écran
+            if bulletY[i] < 0
+                bullets[i] = false
+            end
+        end
+    end
+end
+
+function updateAliens()
+    // Mouvement horizontal des aliens
+    moveAliens = false
+    
+    // Vérifier si les aliens atteignent les bords
+    for i = 0 to 14
+        if aliens[i]
+            row = i / 5
+            col = i % 5
+            alienX = alienStartX + (col * alienSpacing)
+            
+            if (alienDirection == 1 && alienX > 340) || (alienDirection == -1 && alienX < 30)
+                moveAliens = true
+            end
+        end
+    end
+    
+    // Descendre et changer de direction si nécessaire
+    if moveAliens
+        alienStartY = alienStartY + alienDropDistance
+        alienDirection = alienDirection * -1
+        alienSpeed = alienSpeed + 0.2
+        playSound("sol", 0.1)
+    else
+        // Mouvement horizontal normal
+        alienStartX = alienStartX + (alienDirection * alienSpeed)
+    end
+    
+    // Game Over si aliens atteignent le bas
+    if alienStartY > 220
+        gameOver = true
+        playSound("si", 0.8)
+    end
+end
+
+function checkCollisions()
+    // Collision balles vs aliens
+    for b = 0 to 4
+        if bullets[b]
+            for a = 0 to 14
+                if aliens[a]
+                    row = a / 5
+                    col = a % 5
+                    alienX = alienStartX + (col * alienSpacing)
+                    alienY = alienStartY + (row * alienRowSpacing)
+                    
+                    if bulletX[b] >= alienX && bulletX[b] <= alienX + 30 && bulletY[b] >= alienY && bulletY[b] <= alienY + 20
+                        // Alien détruit
+                        aliens[a] = false
+                        bullets[b] = false
+                        score = score + 10
+                        aliensRemaining = aliensRemaining - 1
+                        playSound("mi", 0.2)
+                        
+                        // Victoire si tous les aliens sont détruits
+                        if aliensRemaining == 0
+                            score = score + 100
+                            resetLevel()
+                        end
+                    end
+                end
+            end
+        end
+    end
+    
+    // Collision aliens vs vaisseau
+    for a = 0 to 14
+        if aliens[a]
+            row = a / 5
+            col = a % 5
+            alienX = alienStartX + (col * alienSpacing)
+            alienY = alienStartY + (row * alienRowSpacing)
+            
+            if alienX < playerX + playerWidth && alienX + 30 > playerX && alienY < playerY + playerHeight && alienY + 20 > playerY
+                lives = lives - 1
+                aliens[a] = false
+                playSound("la", 0.5)
+                
+                if lives <= 0
+                    gameOver = true
+                end
+            end
+        end
+    end
+end
+
+function resetLevel()
+    // Réinitialiser les aliens pour le niveau suivant
+    for i = 0 to 14
+        aliens[i] = true
+    end
+    
+    aliensRemaining = 15
+    alienStartX = 50
+    alienStartY = 50
+    alienDirection = 1
+    alienSpeed = 1 + (score / 500)  // Augmenter la vitesse avec le score
+    
+    playSound("do2", 0.5)
+end
+
+function drawGame()
+    // Vaisseau
+    drawRect(playerX, playerY, playerWidth, playerHeight, "#00FF00")
+    drawRect(playerX + 5, playerY - 5, 20, 5, "#00CCCC")
+    
+    // Balles
+    for i = 0 to 4
+        if bullets[i]
+            drawRect(bulletX[i] - 1, bulletY[i], 2, 8, "#FFFF00")
+        end
+    end
+    
+    // Aliens
+    for i = 0 to 14
+        if aliens[i]
+            row = i / 5
+            col = i % 5
+            alienX = alienStartX + (col * alienSpacing)
+            alienY = alienStartY + (row * alienRowSpacing)
+            
+            // Couleur différente par rangée
+            color = "#FF0000"
+            if row == 1
+                color = "#FF7F00"
+            end
+            if row == 2
+                color = "#FFFF00"
+            end
+            
+            drawRect(alienX, alienY, 30, 20, color)
+            drawRect(alienX + 8, alienY + 4, 14, 6, "#FFFFFF")
+            drawRect(alienX + 4, alienY + 14, 8, 5, color)
+            drawRect(alienX + 18, alienY + 14, 8, 5, color)
+        end
+    end
+    
+    // Interface
+    drawText("SPACE INVADERS", 200, 20, "#FFFFFF")
+    drawText("Score: " + score, 80, 20, "#FFFF00")
+    drawText("Vies: " + lives, 320, 20, "#FF0000")
+    
+    drawText("← → : Bouger", 200, 350, "#CCCCCC")
+    drawText("ESPACE : Tirer", 200, 375, "#CCCCCC")
+end
+
+function showGameOver()
+    clearScreen("#330000")
+    drawText("GAME OVER", 200, 120, "#FF0000")
+    drawText("Score final: " + score, 200, 150, "#FFFF00")
+    drawText("Aliens détruits: " + (15 - aliensRemaining), 200, 170, "#00FF00")
+    drawText("Rechargez pour rejouer", 200, 200, "#CCCCCC")
+end

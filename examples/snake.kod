@@ -1,0 +1,146 @@
+// Jeu: Snake Simplifié
+// Version simplifiée du classique jeu du serpent
+
+// Variables du serpent
+let headX = 10
+let headY = 7
+let tailX = 8
+let tailY = 7
+let direction = "right"
+
+// Pomme
+let appleX = 15
+let appleY = 10
+
+// Grille et jeu
+let gridSize = 20
+let score = 0
+let gameOver = false
+let moveTimer = 0
+let moveDelay = 15
+
+function start()
+    clearScreen("#002200")
+    drawText("SNAKE SIMPLIFIÉ - Utilisez les flèches", 80, 50, "#FFFFFF")
+end
+
+function update()
+    clearScreen("#002200")
+    
+    if gameOver
+        drawText("GAME OVER!", 140, 120, "#FF0000")
+        drawText("Score: " + score, 160, 140, "#FFFFFF")
+        drawText("Appuyez sur Espace pour recommencer", 150, 160, "#CCCCCC")
+        
+        if isKeyPressed("space")
+            // Recommence le jeu
+            headX = 10
+            headY = 7
+            tailX = 8
+            tailY = 7
+            direction = "right"
+            score = 0
+            gameOver = false
+            moveTimer = 0
+            appleX = 15
+            appleY = 10
+        end
+        return
+    end
+    
+    // === CONTRÔLES ===
+    if isKeyPressed("up")
+        direction = "up"
+    end
+    if isKeyPressed("down")
+        direction = "down"
+    end
+    if isKeyPressed("left")
+        direction = "left"
+    end
+    if isKeyPressed("right")
+        direction = "right"
+    end
+    
+    // === MOUVEMENT ===
+    moveTimer = moveTimer + 1
+    if moveTimer >= moveDelay
+        moveTimer = 0
+        
+        // Sauvegarde l'ancienne position de la tête pour la queue
+        let oldHeadX = headX
+        let oldHeadY = headY
+        
+        // Déplace la tête
+        if direction == "right"
+            headX = headX + 1
+        end
+        if direction == "left"
+            headX = headX - 1
+        end
+        if direction == "up"
+            headY = headY - 1
+        end
+        if direction == "down"
+            headY = headY + 1
+        end
+        
+        // Vérifie les collisions avec les murs
+        if headX < 0 || headX >= 20 || headY < 0 || headY >= 15
+            gameOver = true
+            return
+        end
+        
+        // Vérifie collision avec la queue
+        if headX == tailX && headY == tailY
+            gameOver = true
+            return
+        end
+        
+        // Vérifie si le serpent mange la pomme
+        if headX == appleX && headY == appleY
+            score = score + 1
+            // Place nouvelle pomme
+            appleX = random(0, 19)
+            appleY = random(0, 14)
+            // Accélère le jeu
+            if moveDelay > 8
+                moveDelay = moveDelay - 1
+            end
+        else
+            // Déplace la queue vers l'ancienne position de la tête
+            tailX = oldHeadX
+            tailY = oldHeadY
+        end
+    end
+    
+    // === AFFICHAGE ===
+    // Dessine la grille
+    drawGrid()
+    
+    // Dessine le serpent
+    drawRect(headX * gridSize + 2, headY * gridSize + 2, gridSize-4, gridSize-4, "#00FF00")
+    drawRect(tailX * gridSize + 3, tailY * gridSize + 3, gridSize-6, gridSize-6, "#008800")
+    
+    // Dessine la pomme
+    drawRect(appleX * gridSize + 1, appleY * gridSize + 1, gridSize-2, gridSize-2, "#FF0000")
+    
+    // Affiche le score
+    drawText("Score: " + score, 10, 15, "#FFFFFF")
+    drawText("Vitesse: " + (20 - moveDelay), 150, 15, "#FFFFFF")
+end
+
+function drawGrid()
+    // Dessine une grille subtile
+    let x = 0
+    while x <= 20
+        drawRect(x * gridSize, 0, 1, 15 * gridSize, "#111111")
+        x = x + 1
+    end
+    
+    let y = 0
+    while y <= 15
+        drawRect(0, y * gridSize, 20 * gridSize, 1, "#111111")
+        y = y + 1
+    end
+end

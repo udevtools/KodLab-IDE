@@ -1,0 +1,369 @@
+// Jeu: Missile Command
+// Défendez vos villes contre les missiles ennemis !
+
+// Variables des villes
+let cities = [true, true, true, true, true, true]
+let cityX = [50, 100, 150, 250, 300, 350]
+let cityY = 260
+let citiesRemaining = 6
+
+// Variables des missiles ennemis
+let enemyMissiles = [false, false, false, false, false]
+let enemyX = [0, 0, 0, 0, 0]
+let enemyY = [0, 0, 0, 0, 0]
+let enemyTargetX = [0, 0, 0, 0, 0]
+let enemyTargetY = [0, 0, 0, 0, 0]
+let enemySpeed = 1.5
+
+// Variables des missiles défensifs
+let defenseMissiles = [false, false, false, false, false]
+let defenseX = [0, 0, 0, 0, 0]
+let defenseY = [0, 0, 0, 0, 0]
+let defenseTargetX = [0, 0, 0, 0, 0]
+let defenseTargetY = [0, 0, 0, 0, 0]
+let defenseSpeed = 4
+
+// Variables des explosions
+let explosions = [false, false, false, false, false]
+let explosionX = [0, 0, 0, 0, 0]
+let explosionY = [0, 0, 0, 0, 0]
+let explosionTimer = [0, 0, 0, 0, 0]
+let explosionSize = [0, 0, 0, 0, 0]
+
+// Variables du jeu
+let score = 0
+let level = 1
+let gameOver = false
+let launcherX = 200
+let spawnTimer = 0
+let crosshairX = 200
+let crosshairY = 150
+
+// Variables de travail pour les boucles
+let explosionIdx = 0
+let defenseIdx = 0
+let enemyIdx = 0
+let missileIdx = 0
+let defIdx = 0
+let expIdx = 0
+let cityIdx = 0
+let cityIndex = 0
+let spawnDelay = 0
+let dirX = 0
+let dirY = 0
+let distance = 0
+let explosionIndex = 0
+let size = 0
+let cityDistance = 0
+
+function start()
+    clearScreen("#000044")
+    playSound("do", 0.3)
+end
+
+function update()
+    if gameOver
+        showGameOver()
+        return
+    end
+    
+    clearScreen("#000044")
+    handleInput()
+    spawnEnemyMissiles()
+    updateMissiles()
+    updateExplosions()
+    checkCollisions()
+    drawGame()
+end
+
+function handleInput()
+    // Déplacer le viseur
+    if isKeyPressed("left") && crosshairX > 20
+        crosshairX = crosshairX - 3
+    end
+    if isKeyPressed("right") && crosshairX < 380
+        crosshairX = crosshairX + 3
+    end
+    if isKeyPressed("up") && crosshairY > 20
+        crosshairY = crosshairY - 3
+    end
+    if isKeyPressed("down") && crosshairY < 200
+        crosshairY = crosshairY + 3
+    end
+    
+    // Tirer un missile défensif
+    if isKeyPressed("space")
+        shootDefenseMissile()
+    end
+end
+
+function shootDefenseMissile()
+    // Trouver un slot libre
+    for defenseIdx = 0 to 4
+        if !defenseMissiles[defenseIdx]
+            defenseMissiles[defenseIdx] = true
+            defenseX[defenseIdx] = launcherX
+            defenseY[defenseIdx] = 280
+            defenseTargetX[defenseIdx] = crosshairX
+            defenseTargetY[defenseIdx] = crosshairY
+            playSound("re", 0.2)
+            return
+        end
+    end
+end
+
+function spawnEnemyMissiles()
+    spawnTimer = spawnTimer + 1
+    
+    // Créer des missiles ennemis selon le niveau
+    spawnDelay = 80 - (level * 5)
+    if spawnDelay < 30
+        spawnDelay = 30
+    end
+    
+    if spawnTimer >= spawnDelay
+        for enemyIdx = 0 to 4
+            if !enemyMissiles[enemyIdx]
+                enemyMissiles[enemyIdx] = true
+                enemyX[enemyIdx] = random(50, 350)
+                enemyY[enemyIdx] = 0
+                
+                // Viser une ville aléatoire
+                cityIndex = random(0, 5)
+                if cities[cityIndex]
+                    enemyTargetX[enemyIdx] = cityX[cityIndex]
+                    enemyTargetY[enemyIdx] = cityY
+                else
+                    enemyTargetX[enemyIdx] = random(50, 350)
+                    enemyTargetY[enemyIdx] = 280
+                end
+                
+                spawnTimer = 0
+                playSound("sol", 0.1)
+                return
+            end
+        end
+    end
+end
+
+function updateMissiles()
+    // Missiles ennemis
+    for missileIdx = 0 to 4
+        if enemyMissiles[missileIdx]
+            // Calculer direction
+            dirX = enemyTargetX[missileIdx] - enemyX[missileIdx]
+            dirY = enemyTargetY[missileIdx] - enemyY[missileIdx]
+            distance = dirX * dirX + dirY * dirY
+            
+            if distance > 100
+                // Normaliser et appliquer vitesse
+                if distance > 0
+                    dirX = dirX / 50 * enemySpeed
+                    dirY = dirY / 50 * enemySpeed
+                end
+                
+                enemyX[missileIdx] = enemyX[missileIdx] + dirX
+                enemyY[missileIdx] = enemyY[missileIdx] + dirY
+            else
+                // Explosion au impact
+                explosionIndex = findFreeExplosion()
+                if explosionIndex >= 0
+                    explosions[explosionIndex] = true
+                    explosionX[explosionIndex] = enemyX[missileIdx]
+                    explosionY[explosionIndex] = enemyY[missileIdx]
+                    explosionSize[explosionIndex] = 25
+                    explosionTimer[explosionIndex] = 30
+                end
+                // Vérifier destruction des villes
+                for cityIdx = 0 to 5
+                    if cities[cityIdx]
+                        cityDistance = (enemyX[missileIdx] - cityX[cityIdx]) * (enemyX[missileIdx] - cityX[cityIdx]) + (enemyY[missileIdx] - cityY) * (enemyY[missileIdx] - cityY)
+                        if cityDistance < 1000
+                            cities[cityIdx] = false
+                            citiesRemaining = citiesRemaining - 1
+                            
+                            if citiesRemaining == 0
+                                gameOver = true
+                            end
+                        end
+                    end
+                end
+                
+                enemyMissiles[missileIdx] = false
+                playSound("la", 0.3)
+            end
+        end
+    end
+    
+    // Missiles défensifs
+    for defIdx = 0 to 4
+        if defenseMissiles[defIdx]
+            // Calculer direction
+            dirX = defenseTargetX[defIdx] - defenseX[defIdx]
+            dirY = defenseTargetY[defIdx] - defenseY[defIdx]
+            distance = dirX * dirX + dirY * dirY
+            
+            if distance > 200
+                // Normaliser et appliquer vitesse
+                if distance > 0
+                    dirX = dirX / 50 * defenseSpeed
+                    dirY = dirY / 50 * defenseSpeed
+                end
+                
+                defenseX[defIdx] = defenseX[defIdx] + dirX
+                defenseY[defIdx] = defenseY[defIdx] + dirY
+            else
+                // Explosion défensive
+                explosionIndex = findFreeExplosion()
+                if explosionIndex >= 0
+                    explosions[explosionIndex] = true
+                    explosionX[explosionIndex] = defenseX[defIdx]
+                    explosionY[explosionIndex] = defenseY[defIdx]
+                    explosionSize[explosionIndex] = 35
+                    explosionTimer[explosionIndex] = 30
+                end
+                defenseMissiles[defIdx] = false
+                playSound("mi", 0.2)
+            end
+        end
+    end
+end
+
+function findFreeExplosion()
+    if !explosions[0]
+        return 0
+    end
+    if !explosions[1]
+        return 1
+    end
+    if !explosions[2]
+        return 2
+    end
+    if !explosions[3]
+        return 3
+    end
+    if !explosions[4]
+        return 4
+    end
+    return -1
+end
+
+function updateExplosions()
+    for expIdx = 0 to 4
+        if explosions[expIdx]
+            explosionTimer[expIdx] = explosionTimer[expIdx] - 1
+            
+            if explosionTimer[expIdx] <= 0
+                explosions[expIdx] = false
+            end
+        end
+    end
+end
+
+function checkCollisions()
+    // Missiles ennemis vs explosions défensives
+    for enemyIdx = 0 to 4
+        if enemyMissiles[enemyIdx]
+            for expIdx = 0 to 4
+                if explosions[expIdx]
+                    distance = (enemyX[enemyIdx] - explosionX[expIdx]) * (enemyX[enemyIdx] - explosionX[expIdx]) + (enemyY[enemyIdx] - explosionY[expIdx]) * (enemyY[enemyIdx] - explosionY[expIdx])
+                    if distance < explosionSize[expIdx] * explosionSize[expIdx]
+                        enemyMissiles[enemyIdx] = false
+                        score = score + 25
+                        playSound("fa", 0.15)
+                    end
+                end
+            end
+        end
+    end
+end
+
+
+
+function drawGame()
+    // Sol
+    drawRect(0, 280, 400, 20, "#8B4513")
+    
+    // Villes
+    for cityIdx = 0 to 5
+        if cities[cityIdx]
+            drawRect(cityX[cityIdx] - 15, cityY, 30, 20, "#00FF00")
+            drawRect(cityX[cityIdx] - 10, cityY - 8, 8, 8, "#00CC00")
+            drawRect(cityX[cityIdx] + 2, cityY - 12, 6, 12, "#00CC00")
+            drawRect(cityX[cityIdx] - 5, cityY - 6, 4, 6, "#00AA00")
+        else
+            // Ville détruite
+            drawRect(cityX[cityIdx] - 8, cityY + 10, 16, 10, "#666666")
+        end
+    end
+    
+    // Lanceur
+    drawRect(launcherX - 10, 270, 20, 10, "#CCCCCC")
+    drawRect(launcherX - 3, 265, 6, 5, "#AAAAAA")
+    
+    // Missiles ennemis
+    for enemyIdx = 0 to 4
+        if enemyMissiles[enemyIdx]
+            drawRect(enemyX[enemyIdx] - 1, enemyY[enemyIdx] - 3, 2, 6, "#FF0000")
+            // Traînée
+            drawLine(enemyX[enemyIdx], enemyY[enemyIdx], enemyX[enemyIdx], enemyY[enemyIdx] - 10, "#FF6666")
+        end
+    end
+    
+    // Missiles défensifs
+    for defIdx = 0 to 4
+        if defenseMissiles[defIdx]
+            drawRect(defenseX[defIdx] - 1, defenseY[defIdx] - 3, 2, 6, "#00FF00")
+            // Traînée
+            drawLine(defenseX[defIdx], defenseY[defIdx], defenseX[defIdx], defenseY[defIdx] + 8, "#66FF66")
+        end
+    end
+    
+    // Explosions
+    for expIdx = 0 to 4
+        if explosions[expIdx]
+            size = explosionSize[expIdx] * explosionTimer[expIdx] / 30
+            if size > 0
+                drawCircle(explosionX[expIdx], explosionY[expIdx], size, "#FFFF00")
+                if size > 5
+                    drawCircle(explosionX[expIdx], explosionY[expIdx], size - 5, "#FF7F00")
+                end
+                if size > 10
+                    drawCircle(explosionX[expIdx], explosionY[expIdx], size - 10, "#FF0000")
+                end
+            end
+        end
+    end
+    
+    // Viseur
+    drawLine(crosshairX - 10, crosshairY, crosshairX + 10, crosshairY, "#FFFFFF")
+    drawLine(crosshairX, crosshairY - 10, crosshairX, crosshairY + 10, "#FFFFFF")
+    drawCircle(crosshairX, crosshairY, 8, "#FFFFFF")
+    
+    // Interface
+    drawText("MISSILE COMMAND", 200, 15, "#FFFFFF")
+    drawText("Score: " + score, 80, 15, "#FFFF00")
+    drawText("Niveau: " + level, 300, 15, "#00FF00")
+    drawText("Villes: " + citiesRemaining, 200, 295, "#00FF00")
+    
+    // Contrôles
+    drawText("Flèches: Viseur | ESPACE: Tir", 200, 35, "#CCCCCC")
+end
+
+function showGameOver()
+    clearScreen("#330000")
+    drawText("GAME OVER", 200, 100, "#FF0000")
+    drawText("Score final: " + score, 200, 130, "#FFFF00")
+    drawText("Villes sauvées: " + citiesRemaining + "/6", 200, 150, "#00FF00")
+    drawText("Niveau atteint: " + level, 200, 170, "#FFFFFF")
+    
+    if citiesRemaining >= 4
+        drawText("Excellent défenseur !", 200, 200, "#00FF00")
+    else if citiesRemaining >= 2
+        drawText("Défense correcte", 200, 200, "#FFFF00")
+    else
+        drawText("La Terre a besoin de vous !", 200, 200, "#FF7F00")
+    end
+    
+    drawText("Rechargez pour rejouer", 200, 230, "#CCCCCC")
+end

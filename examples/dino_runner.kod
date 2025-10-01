@@ -1,0 +1,249 @@
+// DINO RUNNER - mini jeu de type Chrome Dino (version compacte)
+// Espace pour sauter, redémarrer après game over
+
+let px = 50
+let py = 260
+let pvy = 0
+let jumpPower = -7
+let gravity = 0.35
+let onGround = 1
+
+let obsCount = 6
+let ox = [1000,1000,1000,1000,1000,1000]
+let ow = [0,0,0,0,0,0]
+let oh = [0,0,0,0,0,0]
+let oactive = [0,0,0,0,0,0]
+
+let speed = 4
+let spawnTimer = 0
+let score = 0
+let gameState = "playing"
+let time = 0
+let particles = []
+let particleCount = 0
+let dinoFrame = 0
+let jumpParticles = 0
+
+function start()
+    clearScreen("#fff")
+    drawText("DINO RUNNER", 200, 20, "#000")
+    drawText("Espace = saut", 200, 36, "#000")
+end
+
+function update()
+    if gameState == "playing"
+        time = time + 1
+        handleInput()
+        // physique du joueur
+        if onGround == 0
+            pvy = pvy + gravity
+        end
+        py = py + pvy
+        if py >= 260
+            py = 260
+            pvy = 0
+            onGround = 1
+        end
+
+        // obstacles
+        spawnTimer = spawnTimer - 1
+        if spawnTimer <= 0
+            spawnTimer = random(40, 80) - (time / 300)
+            spawnObstacle()
+        end
+        
+        // animation du dino
+        if onGround == 1
+            dinoFrame = (time / 8) % 2
+        end
+        
+        // particules de course
+        if onGround == 1 && time % 6 == 0
+            addDustParticle()
+        end
+        
+        updateParticles()
+        for index = 0 to obsCount - 1
+            if oactive[index] == 1
+                ox[index] = ox[index] - speed - (time / 600)
+                if ox[index] + ow[index] < 0
+                    oactive[index] = 0
+                    score = score + 1
+                end
+            end
+        end
+
+        // collision
+        for index = 0 to obsCount - 1
+            if oactive[index] == 1
+                if px + 24 > ox[index] && px < ox[index] + ow[index] && py + 24 > (280 - oh[index]) && py < 280
+                    gameState = "gameover"
+                    playSound("mi", 0.2)
+                end
+            end
+        end
+
+        drawWorld()
+        drawPlayer()
+        drawObstacles()
+        drawUI()
+    end
+
+    if gameState == "gameover"
+        drawGameOver()
+        if isKeyPressed("space")
+            restart()
+        end
+    end
+end
+
+function handleInput()
+    if isKeyPressed("space")
+        if onGround == 1
+            pvy = jumpPower
+            onGround = 0
+            playSound("do", 0.08)
+            // Particules de saut
+            for index = 0 to 3
+                addJumpParticle()
+            end
+        end
+    end
+end
+
+function spawnObstacle()
+    // trouve un slot libre
+    for index = 0 to obsCount - 1
+        if oactive[index] == 0
+            oactive[index] = 1
+            ox[index] = 420
+            // Variation des types d'obstacles
+            obstacleType = random(1, 3)
+            if obstacleType == 1
+                // Obstacle bas
+                ow[index] = random(12, 20)
+                oh[index] = random(15, 25)
+            end
+            if obstacleType == 2
+                // Obstacle moyen
+                ow[index] = random(8, 15)
+                oh[index] = random(25, 35)
+            end
+            if obstacleType == 3
+                // Obstacle haut et fin
+                ow[index] = random(6, 12)
+                oh[index] = random(35, 45)
+            end
+            break
+        end
+    end
+end
+
+function drawWorld()
+    clearScreen("#fff")
+    drawRect(0, 280, 400, 20, "#444")
+    // Nuages de fond
+    cloudX = (time / 2) % 500 - 100
+    drawRect(cloudX, 40, 60, 20, "#eee")
+    drawRect(cloudX + 200, 60, 40, 15, "#eee")
+    drawParticles()
+end
+
+function drawPlayer()
+    // Corps du dino avec animation simple
+    if onGround == 1
+        // Animation de course
+        if dinoFrame == 0
+            drawRect(px, py, 24, 24, "#222")
+            drawRect(px + 2, py + 20, 6, 4, "#222")  // Patte gauche
+            drawRect(px + 16, py + 22, 6, 2, "#222") // Patte droite
+        else
+            drawRect(px, py, 24, 24, "#222")
+            drawRect(px + 2, py + 22, 6, 2, "#222")  // Patte gauche
+            drawRect(px + 16, py + 20, 6, 4, "#222") // Patte droite
+        end
+    else
+        // En l'air - position fixe
+        drawRect(px, py, 24, 24, "#222")
+        drawRect(px + 4, py + 20, 4, 4, "#222")
+        drawRect(px + 16, py + 20, 4, 4, "#222")
+    end
+    // Oeil
+    drawRect(px + 18, py + 4, 3, 3, "#fff")
+end
+
+function drawObstacles()
+    for index = 0 to obsCount - 1
+        if oactive[index] == 1
+            // Couleur selon la taille
+            obstacleColor = "#880000"
+            if oh[index] > 35
+                obstacleColor = "#aa0000"  // Plus grand = plus rouge
+            end
+            if oh[index] < 20
+                obstacleColor = "#660000"  // Plus petit = plus sombre
+            end
+            drawRect(ox[index], 280 - oh[index], ow[index], oh[index], obstacleColor)
+            // Effet de relief
+            drawRect(ox[index], 280 - oh[index], 2, oh[index], "#ff4444")
+        end
+    end
+end
+
+function addDustParticle()
+    if particleCount < 5
+        particleCount = particleCount + 1
+    end
+end
+
+function addJumpParticle()
+    if particleCount < 10
+        particleCount = particleCount + 3
+    end
+end
+
+function updateParticles()
+    // Système simplifié sans manipulation complexe d'arrays
+    if particleCount > 0
+        particleCount = particleCount - 1
+        if particleCount < 0
+            particleCount = 0
+        end
+    end
+end
+
+function drawParticles()
+    // Effet visuel simple basé sur le compteur
+    if particleCount > 0
+        // Particules de poussière autour du dino
+        if onGround == 1
+            drawRect(px + random(-5, 5), py + 22, 2, 2, "#ccc")
+            drawRect(px + random(-3, 8), py + 20, 1, 1, "#aaa")
+        end
+    end
+end
+
+function drawUI()
+    drawText("Score: " + score, 60, 12, "#000")
+end
+
+function drawGameOver()
+    drawText("GAME OVER - ESPACE pour recommencer", 200, 140, "#000")
+end
+
+function restart()
+    px = 50
+    py = 260
+    pvy = 0
+    onGround = 1
+    for index = 0 to obsCount - 1
+        oactive[index] = 0
+        ox[index] = 1000
+    end
+    spawnTimer = 30
+    score = 0
+    time = 0
+    gameState = "playing"
+    particleCount = 0
+    dinoFrame = 0
+end

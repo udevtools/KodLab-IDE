@@ -1,0 +1,646 @@
+<!--
+KodLab Console - Educational Programming Environment
+Copyright (c) 2025 - Tous droits réservés
+
+LICENCE D'UTILISATION :
+- Utilisation autorisée pour l'apprentissage et l'éducation
+- Interdiction de copier, modifier ou redistribuer sans autorisation
+- Utilisation commerciale interdite sans licence séparée
+-->
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KodLab - Console de Programmation</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🎮 KodLab</h1>
+            <p>Console de programmation pour apprendre en s'amusant</p>
+            <!--<p style="font-size: 0.8em; color: #666;">
+                <a href="license.html" style="color: #00d4aa;">📄 Licence et conditions d'utilisation</a>
+            </p>-->
+        </header>
+
+        <div class="main-content">
+            <!-- Éditeur de code -->
+            <div class="editor-panel">
+                <div class="panel-header">
+                    <h3>Éditeur .kod</h3>
+                    <div class="controls">
+                        <button id="loadExample" style="display: none;">🎲 Charger exemple</button>
+                        <button id="importBtn">📁 Importer .kod</button>
+                        <button id="exportBtn">💾 Exporter .kod</button>
+                    </div>
+                </div>
+                <div class="editor-container">
+                    <textarea id="codeEditor" placeholder="Écrivez votre code .kod ici..."></textarea>
+                    <div class="editor-controls">
+                        <button id="compileBtn">🔨 Compiler</button>
+                        <button id="runBtn" disabled>▶️ Lancer</button>
+                    </div>
+                </div>
+                <input type="file" id="fileInput" accept=".kod" style="display: none;">
+                <div id="compileOutput" class="output"></div>
+            </div>
+
+            <!-- Émulateur -->
+            <div class="emulator-panel">
+                <div class="panel-header">
+                    <h3>Émulateur KodLab</h3>
+                    <div class="controls">
+                        <a href="emulateur.html" style="color: #00d4aa; text-decoration: none; padding: 8px 12px; border: 1px solid #00d4aa; border-radius: 6px; font-size: 0.9rem; transition: all 0.3s ease;">🎮 Mode Jeu</a>
+                        <button id="stopBtn">⏹️ Arrêter</button>
+                        <span id="fps">FPS: 0</span>
+                    </div>
+                </div>
+                <div class="emulator-container">
+                    <canvas id="gameCanvas" width="400" height="300"></canvas>
+                </div>
+                <div class="emulator-info">
+                    <p>Contrôles: Flèches directionnelles, Espace</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Documentation -->
+        <div class="docs-section">
+            <h3>📚 Guide de démarrage</h3>
+            <div class="docs-content">
+                <h4>🎮 Exemples de jeux</h4>
+                <p>Découvrez notre collection de jeux d'exemple. Cliquez sur "Charger" pour voir le code :</p>
+                <div class="examples-grid">
+                    <div class="example-card">
+                        <h5>🟢 Template de base</h5>
+                        <p>Structure minimaliste pour créer votre propre jeu. Point de départ idéal pour débuter.</p>
+                        <button class="example-load-btn" onclick="loadExampleCode('template')">📝 Charger le template</button>
+                    </div>
+                    <div class="example-card">
+                        <h5>🐍 Snake</h5>
+                        <p>Version simplifiée du classique jeu du serpent. Mangez la pomme et grandissez !</p>
+                        <button class="example-load-btn" onclick="loadExampleCode('snake')">🎮 Charger Snake</button>
+                    </div>
+                    <div class="example-card">
+                        <h5>🏓 Pong</h5>
+                        <p>Le légendaire jeu de ping-pong avec IA. Premier jeu vidéo de l'histoire !</p>
+                        <button class="example-load-btn" onclick="loadExampleCode('pong')">🎮 Charger Pong</button>
+                    </div>
+                    <div class="example-card">
+                        <h5>🦕 Dino Runner</h5>
+                        <p>Inspiré du jeu de Chrome. Sautez pour éviter les obstacles et battez votre record !</p>
+                        <button class="example-load-btn" onclick="loadExampleCode('dino_runner')">🎮 Charger Dino Runner</button>
+                    </div>
+                    <div class="example-card">
+                        <h5>📦 Sokoban</h5>
+                        <p>Puzzle classique : poussez les caisses sur les objectifs. Réflexion et stratégie !</p>
+                        <button class="example-load-btn" onclick="loadExampleCode('sokoban')">🎮 Charger Sokoban</button>
+                    </div>
+                    <div class="example-card">
+                        <h5>🚀 Asteroids</h5>
+                        <p>Détruisez les astéroïdes dans l'espace. Rotation et tir dans toutes les directions !</p>
+                        <button class="example-load-btn" onclick="loadExampleCode('asteroids')">🎮 Charger Asteroids</button>
+                    </div>
+                    <div class="example-card">
+                        <h5>👻 Pacman</h5>
+                        <p>Le célèbre mangeur de pastilles avec des fantômes. Collectez tout sans vous faire attraper !</p>
+                        <button class="example-load-btn" onclick="loadExampleCode('pacman')">🎮 Charger Pacman</button>
+                    </div>
+                    <div class="example-card">
+                        <h5>🐸 Frogger</h5>
+                        <p>Traversez la route et la rivière sans vous faire écraser. Timing et réflexes !</p>
+                        <button class="example-load-btn" onclick="loadExampleCode('frogger')">🎮 Charger Frogger</button>
+                    </div>
+                    <div class="example-card">
+                        <h5>🐦 Flappy Bird</h5>
+                        <p>Volez entre les tuyaux sans les toucher. Simple en apparence, difficile à maîtriser !</p>
+                        <button class="example-load-btn" onclick="loadExampleCode('flappybird')">🎮 Charger Flappy Bird</button>
+                    </div>
+                    <div class="example-card">
+                        <h5>🧱 Breakout</h5>
+                        <p>Cassez tous les blocs avec votre balle. Contrôlez la raquette et ne ratez pas !</p>
+                        <button class="example-load-btn" onclick="loadExampleCode('breakout')">🎮 Charger Breakout</button>
+                    </div>
+                    <div class="example-card">
+                        <h5>🎯 Space Invaders</h5>
+                        <p>Défendez la Terre contre l'invasion alien. Tirez et esquivez les projectiles !</p>
+                        <button class="example-load-btn" onclick="loadExampleCode('spaceinvaders')">🎮 Charger Space Invaders</button>
+                    </div>
+                    <div class="example-card">
+                        <h5>🎵 Piano</h5>
+                        <p>Piano virtuel pour créer de la musique. Apprenez les bases du son dans vos jeux !</p>
+                        <button class="example-load-btn" onclick="loadExampleCode('piano')">🎮 Charger Piano</button>
+                    </div>
+                    <div class="example-card">
+                        <h5>🎈 Pang</h5>
+                        <p>Éclatez les ballons avant qu'ils ne vous touchent. Action et précision !</p>
+                        <button class="example-load-btn" onclick="loadExampleCode('pang')">🎮 Charger Pang</button>
+                    </div>
+                    <div class="example-card">
+                        <h5>🐼 Panda Adventures</h5>
+                        <p>Aventures d'un panda mignon dans un monde coloré. Plateforme et collecte !</p>
+                        <button class="example-load-btn" onclick="loadExampleCode('pandadventures')">🎮 Charger Panda Adventures</button>
+                    </div>
+                    <div class="example-card">
+                        <h5>🚀 Missile Command</h5>
+                        <p>Défendez vos villes contre les missiles ennemis. Stratégie et réflexes !</p>
+                        <button class="example-load-btn" onclick="loadExampleCode('missilecommand')">🎮 Charger Missile Command</button>
+                    </div>
+                    <div class="example-card">
+                        <h5>🏃 Jumper</h5>
+                        <p>Jeu de saut et de plateforme. Testez vos réflexes et votre timing !</p>
+                        <button class="example-load-btn" onclick="loadExampleCode('jumper')">🎮 Charger Jumper</button>
+                    </div>
+                    <div class="example-card">
+                        <h5>⚡ Collect Balls</h5>
+                        <p>Collectez les balles qui tombent et évitez les obstacles. Réflexes et score !</p>
+                        <button class="example-load-btn" onclick="loadExampleCode('collect_balls')">🎮 Charger Collect Balls</button>
+                    </div>
+                    <div class="example-card">
+                        <h5>🎭 Simon</h5>
+                        <p>Jeu de mémoire classique. Répétez la séquence de couleurs et sons !</p>
+                        <button class="example-load-btn" onclick="loadExampleCode('simon')">🎮 Charger Simon</button>
+                    </div>
+                    <div class="example-card">
+                        <h5>⭕ Tic Tac Toe</h5>
+                        <p>Morpion classique contre l'ordinateur. Stratégie et logique !</p>
+                        <button class="example-load-btn" onclick="loadExampleCode('tictactoe')">🎮 Charger Tic Tac Toe</button>
+                    </div>
+                    <div class="example-card">
+                        <h5>🗿 Labyrinthe</h5>
+                        <p>Trouvez la sortie du labyrinthe ! Explorez les passages et évitez les murs.</p>
+                        <button class="example-load-btn" onclick="loadExampleCode('labyrinthe')">🎮 Charger Labyrinthe</button>
+                    </div>
+                    
+                </div>
+                
+                <hr style="margin: 30px 0;">
+                
+                <h4>🔧 Fonctions principales:</h4>
+                <ul>
+                    <li><code>start()</code> - Fonction d'initialisation</li>
+                    <li><code>update()</code> - Fonction appelée à chaque frame</li>
+                    <li><code>playSound(note, duration)</code> - Joue un son musical</li>
+                </ul>
+                <h4>🎨 Commandes graphiques:</h4>
+                <ul>
+                    <li><code>clearScreen(color)</code> - Efface l'écran</li>
+                    <li><code>drawRect(x, y, width, height, color)</code> - Dessine un rectangle</li>
+                    <li><code>drawCircle(x, y, radius, color)</code> - Dessine un cercle</li>
+                    <li><code>drawLine(x1, y1, x2, y2, color)</code> - Dessine une ligne</li>
+                    <li><code>drawText(text, x, y, color)</code> - Affiche du texte</li>
+                </ul>
+
+                <h4>⌨️ Contrôles:</h4>
+                <ul>
+                    <li><code>isKeyPressed(key)</code> - Vérifie si une touche est pressée ("up", "down", "left", "right", "space")</li>
+                </ul>
+                
+                <h4>💡 Exemples d'utilisation:</h4>
+                <div style="background: #001122; padding: 15px; border-radius: 8px; margin: 10px 0; font-family: 'Courier New', monospace; font-size: 0.9em; border-left: 4px solid #00d4aa;">
+                    <div style="color: #888; margin-bottom: 8px;">// 🎵 Sons</div>
+                    <div style="color: #00d4aa;">playSound</div><div style="color: #fff;">("do", 0.5)         </div><div style="color: #888;">// Note do pendant 0.5 sec</div><br>
+                    <div style="color: #00d4aa;">playSound</div><div style="color: #fff;">("la", 0.2)         </div><div style="color: #888;">// Note la pendant 0.2 sec</div><br>
+                    
+                    <div style="color: #888; margin-bottom: 8px;">// 🎨 Graphiques</div>
+                    <span style="color: #00d4aa;">clearScreen</span><span style="color: #fff;">("</span><span style="color: #ff6b6b;">#001122</span><span style="color: #fff;">")      </span><span style="color: #888;">// Fond bleu foncé</span><br>
+                    <span style="color: #00d4aa;">drawRect</span><span style="color: #fff;">(50, 100, 80, 40, "</span><span style="color: #ff6b6b;">#FF0000</span><span style="color: #fff;">") </span><span style="color: #888;">// Rectangle rouge</span><br>
+                    <span style="color: #00d4aa;">drawCircle</span><span style="color: #fff;">(200, 150, 30, "</span><span style="color: #ff6b6b;">#00FF00</span><span style="color: #fff;">") </span><span style="color: #888;">// Cercle vert</span><br>
+                    <span style="color: #00d4aa;">drawLine</span><span style="color: #fff;">(10, 10, 390, 290, "</span><span style="color: #ff6b6b;">#FFFF00</span><span style="color: #fff;">") </span><span style="color: #888;">// Ligne diagonale jaune</span><br>
+                    <span style="color: #00d4aa;">drawText</span><span style="color: #fff;">("Score: 100", 10, 30, "</span><span style="color: #ff6b6b;">#FFFFFF</span><span style="color: #fff;">") </span><span style="color: #888;">// Texte blanc</span>
+                </div>
+                
+                <h4>📁 Import/Export:</h4>
+                <ul>
+                    <li><strong>📁 Importer .kod</strong> - Charge un fichier .kod depuis votre ordinateur</li>
+                    <li><strong>💾 Exporter .kod</strong> - Sauvegarde votre code dans un fichier .kod</li>
+                </ul>
+                <h4>⚡ Extension VSCode:</h4>
+                <ul>
+                    <li><strong>📦 Télécharger :</strong> <a href="kod-official-0.0.1.vsix" download style="background: #ff6b35; color: white; padding: 4px 8px; border-radius: 4px; text-decoration: none;">kod-official-0.0.1.vsix</a></li>
+                    <li><strong>📥 Installation :</strong> VSCode → <kbd>Ctrl+Maj+P</kbd> → <em>"Extensions: Installer depuis un fichier .VSIX"</em></li>
+                    <li><strong>✨ Résultat :</strong> Coloration syntaxique .kod dans VSCode</li>
+                </ul>
+                
+                <h4>📖 Documentation complète :</h4>
+                <div style="background: linear-gradient(135deg, #00d4aa, #0099cc); padding: 20px; border-radius: 12px; margin: 15px 0; text-align: center; box-shadow: 0 4px 15px rgba(0, 212, 170, 0.2);">
+                    <div style="color: #001122; font-size: 1.1em; font-weight: bold; margin-bottom: 8px;">
+                        🚀 Prêt à aller plus loin ?
+                    </div>
+                    <div style="color: #001122; margin-bottom: 15px;">
+                        Découvrez la documentation complète avec tutoriels détaillés, API avancée et guides de développement !
+                    </div>
+                    <a href="https://udevtools.github.io/KodLab-Documentation/" target="_blank" 
+                       style="background: #001122; color: #00d4aa; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: bold; font-size: 1.05em; display: inline-block; transition: all 0.3s ease; box-shadow: 0 2px 8px rgba(0, 20, 34, 0.3);"
+                       onmouseover="this.style.transform='scale(1.05)'; this.style.boxShadow='0 4px 15px rgba(0, 20, 34, 0.4)'"
+                       onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='0 2px 8px rgba(0, 20, 34, 0.3)'">
+                        📚 Consulter la documentation →
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Protection KodLab Console - Copyright 2025
+        
+        (function(){
+            let devtools = false;
+            'use strict';
+            // Anti-DevTools basique
+            setInterval(function(){
+                if(window.outerHeight - window.innerHeight > 160 || window.outerWidth - window.innerWidth > 160){
+                    if(!devtools){
+                        devtools = true;
+                        console.clear();
+                        console.log('%c⚠️ CONSOLE PROTÉGÉE', 'color:#fff; background:#ff4444; padding:10px 20px; font-size:18px; font-weight:bold; border-radius:5px;');
+                        console.log('');
+                        console.log('%c🎮 KodLab Console', 'color:#00d4aa; font-size:20px; font-weight:bold;');
+                        console.log('%cConsole de Programmation Éducative', 'color:#0099cc; font-size:12px;');
+                        console.log('');
+                        console.log('%c📋 Cette console est protégée par copyright', 'color:#333; font-weight:bold;');
+                        console.log('');
+                        console.log('%c✅ Vous pouvez :', 'color:#00d4aa; font-weight:bold;');
+                        console.log('  • Utiliser la console pour apprendre');
+                        console.log('  • Créer des jeux avec le langage .kod');
+                        console.log('  • Partager vos créations');
+                        console.log('');
+                        console.log('%c❌ Vous ne pouvez pas :', 'color:#ff4444; font-weight:bold;');
+                        console.log('  • Copier le code source de la console');
+                        console.log('  • Modifier ou redistribuer le logiciel');
+                        console.log('  • Utiliser commercialement sans licence');
+                        console.log('');
+                        console.log('%c© 2025 - Tous droits réservés', 'color:#666; font-style:italic;');
+                    }
+                } else { devtools = false; }
+            }, 1000);
+            
+            // Désactive clic droit
+            document.addEventListener('contextmenu', function(e){ e.preventDefault(); });
+            
+            // Désactive F12, Ctrl+Shift+I, etc.
+            document.addEventListener('keydown', function(e){
+                if(e.keyCode === 123 || (e.ctrlKey && e.shiftKey && (e.keyCode === 73 || e.keyCode === 74)) || (e.ctrlKey && e.keyCode === 85)){
+                    e.preventDefault(); return false;
+                }
+            });
+            
+            // Banner de copyright élégant
+            console.log('%c', 'font-size:1px; padding:20px 120px; background:linear-gradient(90deg, #00d4aa, #0099cc); border-radius:10px; margin:10px 0;');
+            console.log('%c🎮 KodLab Console', 'color:#00d4aa; font-size:24px; font-weight:bold; text-shadow: 2px 2px 4px rgba(0,0,0,0.3);');
+            console.log('%cConsole de Programmation Éducative', 'color:#0099cc; font-size:14px; font-style:italic;');
+            console.log('');
+            console.log('%c📄 LICENCE ET CONDITIONS D\'UTILISATION', 'color:#fff; background:#333; padding:5px 10px; font-weight:bold;');
+            console.log('%c✅ Utilisation autorisée :', 'color:#00d4aa; font-weight:bold;');
+            console.log('  • Apprentissage personnel de la programmation');
+            console.log('  • Utilisation éducative en classe');
+            console.log('  • Création et partage de jeux en langage .kod');
+            console.log('');
+            console.log('%c🚫 Utilisation interdite :', 'color:#ff4444; font-weight:bold;');
+            console.log('  • Copie ou reproduction du code source');
+            console.log('  • Modification ou ingénierie inverse');
+            console.log('  • Redistribution sans autorisation');
+            console.log('  • Utilisation commerciale sans licence');
+            console.log('');
+            console.log('%c⚖️ Copyright © 2025 - Tous droits réservés', 'color:#666; font-style:italic;');
+            console.log('Cette œuvre est protégée par le droit d\'auteur.');
+            console.log('');
+            console.log('%c💡 Astuce : Utilisez cette console pour apprendre à programmer !', 'color:#ffa500; background:#fff3cd; padding:5px; border-left:4px solid #ffa500;');
+        })();
+
+        // Message de bienvenue après chargement complet
+        window.addEventListener('load', function() {
+            setTimeout(function() {
+                console.log('');
+                console.log('%c🚀 Console KodLab prête !', 'color:#00d4aa; font-size:16px; font-weight:bold;');
+                console.log('%cVous pouvez maintenant créer vos jeux en langage .kod', 'color:#0099cc;');
+                console.log('%cCommencez par charger un exemple ou écrivez votre code !', 'color:#666; font-style:italic;');
+                console.log('');
+            }, 1000);
+        });
+        
+        // Fonction pour charger les exemples de jeux
+        function loadExampleCode(gameName) {
+            fetch('examples/' + gameName + '.kod')
+                .then(response => response.text())
+                .then(code => {
+                    const codeEditor = document.getElementById('codeEditor');
+                    if (codeEditor) {
+                        codeEditor.value = code;
+                        document.getElementById('runBtn').disabled = true;
+                        const compileOutput = document.getElementById('compileOutput');
+                        if (compileOutput) {
+                            compileOutput.textContent = 'Exemple "' + gameName + '" chargé ! Cliquez sur "Compiler" pour tester.';
+                            compileOutput.className = 'output compile-success';
+                        }
+                        codeEditor.focus();
+                        console.log('%c🎮 Exemple "' + gameName + '" chargé !', 'color:#00d4aa; font-weight:bold;');
+                    }
+                })
+                .catch(error => {
+                    console.error('Erreur lors du chargement de l\'exemple:', error);
+                    const compileOutput = document.getElementById('compileOutput');
+                    if (compileOutput) {
+                        compileOutput.textContent = 'Erreur: Impossible de charger l\'exemple "' + gameName + '".';
+                        compileOutput.className = 'output compile-error';
+                    }
+                });
+        }
+    </script>
+
+    <!-- CONSOLE DÉVELOPPEUR -->
+    <div id="devConsole" class="dev-console">
+        <div class="dev-console-header">
+            <h4>🛠️ Console Développeur</h4>
+            <div class="dev-console-controls">
+                <button id="expandConsole" class="dev-btn">⛶ Agrandir</button>
+                <button id="clearConsole" class="dev-btn">🗑️ Effacer</button>
+                <button id="toggleConsole" class="dev-btn">❌</button>
+            </div>
+        </div>
+        <div id="consoleOutput" class="dev-console-output"></div>
+    </div>
+    
+    <button id="showConsole" class="dev-console-toggle">🛠️</button>
+
+    <style>
+        .dev-console {
+            position: fixed;
+            bottom: 0;
+            right: 0;
+            width: 50%;
+            height: 300px;
+            background: #1a1a1a;
+            border: 2px solid #00d4aa;
+            border-radius: 8px 0 0 0;
+            display: none;
+            flex-direction: column;
+            font-family: 'Courier New', monospace;
+            z-index: 10000;
+            box-shadow: -5px -5px 15px rgba(0, 0, 0, 0.3);
+            transition: all 0.3s ease;
+        }
+        
+        .dev-console.show {
+            display: flex;
+        }
+        
+        .dev-console.expanded {
+            width: 80%;
+            height: 70vh;
+            bottom: 5%;
+            right: 10%;
+            border-radius: 8px;
+        }
+        
+        .dev-console-header {
+            background: #2a2a2a;
+            padding: 8px 12px;
+            border-bottom: 1px solid #00d4aa;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .dev-console-header h4 {
+            margin: 0;
+            color: #00d4aa;
+            font-size: 14px;
+        }
+        
+        .dev-console-controls {
+            display: flex;
+            gap: 5px;
+        }
+        
+        .dev-btn {
+            background: #333;
+            color: #00d4aa;
+            border: 1px solid #555;
+            border-radius: 4px;
+            padding: 4px 8px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        
+        .dev-btn:hover {
+            background: #444;
+        }
+        
+        .dev-console-output {
+            flex: 1;
+            padding: 10px;
+            overflow-y: auto;
+            background: #0f0f0f;
+            font-size: 12px;
+            line-height: 1.4;
+        }
+        
+        .dev-console-toggle {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: #00d4aa;
+            color: #001122;
+            border: none;
+            font-size: 20px;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(0, 212, 170, 0.3);
+            transition: all 0.3s ease;
+            z-index: 10001;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            line-height: 1;
+        }
+        
+        .dev-console-toggle:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 20px rgba(0, 212, 170, 0.5);
+        }
+        
+        .dev-console-toggle.hidden {
+            display: none;
+        }
+        
+        .log-entry {
+            margin: 2px 0;
+            padding: 2px 5px;
+            border-radius: 3px;
+        }
+        
+        .log-info {
+            color: #00d4aa;
+        }
+        
+        .log-warn {
+            color: #ffaa00;
+            background: rgba(255, 170, 0, 0.1);
+        }
+        
+        .log-error {
+            color: #ff4444;
+            background: rgba(255, 68, 68, 0.1);
+        }
+        
+        .log-debug {
+            color: #888;
+        }
+        
+        .log-timestamp {
+            color: #666;
+            font-size: 10px;
+        }
+    </style>
+
+    <script>
+        // Console développeur
+        class DevConsole {
+            constructor() {
+                this.console = document.getElementById('devConsole');
+                this.output = document.getElementById('consoleOutput');
+                this.toggleBtn = document.getElementById('showConsole');
+                this.closeBtn = document.getElementById('toggleConsole');
+                this.clearBtn = document.getElementById('clearConsole');
+                this.expandBtn = document.getElementById('expandConsole');
+                
+                this.setupEventListeners();
+                this.interceptConsole();
+                this.interceptErrors();
+                
+                this.log('🚀 Console développeur initialisée', 'info');
+            }
+            
+            setupEventListeners() {
+                this.toggleBtn.addEventListener('click', () => this.show());
+                this.closeBtn.addEventListener('click', () => this.hide());
+                this.clearBtn.addEventListener('click', () => this.clear());
+                this.expandBtn.addEventListener('click', () => this.toggleExpansion());
+                
+                // Raccourci clavier F12
+                document.addEventListener('keydown', (e) => {
+                    if (e.key === 'F12') {
+                        e.preventDefault();
+                        this.toggle();
+                    }
+                });
+            }
+            
+            show() {
+                this.console.classList.add('show');
+                this.toggleBtn.classList.add('hidden');
+            }
+            
+            hide() {
+                this.console.classList.remove('show');
+                this.toggleBtn.classList.remove('hidden');
+            }
+            
+            toggle() {
+                if (this.console.classList.contains('show')) {
+                    this.hide();
+                } else {
+                    this.show();
+                }
+            }
+            
+            clear() {
+                this.output.innerHTML = '';
+                this.log('Console effacée', 'debug');
+            }
+            
+            toggleExpansion() {
+                this.console.classList.toggle('expanded');
+                
+                if (this.console.classList.contains('expanded')) {
+                    this.expandBtn.innerHTML = 'Réduire';
+                } else {
+                    this.expandBtn.innerHTML = '⛶ Agrandir';
+                }
+            }
+            
+            log(message, type = 'info') {
+                const timestamp = new Date().toLocaleTimeString();
+                const entry = document.createElement('div');
+                entry.className = `log-entry log-${type}`;
+                entry.innerHTML = `<span class="log-timestamp">${timestamp}</span> ${this.formatMessage(message)}`;
+                
+                this.output.appendChild(entry);
+                this.output.scrollTop = this.output.scrollHeight;
+            }
+            
+            formatMessage(message) {
+                if (typeof message === 'object') {
+                    try {
+                        return JSON.stringify(message, null, 2);
+                    } catch (e) {
+                        return message.toString();
+                    }
+                }
+                return String(message);
+            }
+            
+            interceptConsole() {
+                const originalConsole = {
+                    log: console.log,
+                    warn: console.warn,
+                    error: console.error,
+                    info: console.info,
+                    debug: console.debug
+                };
+                
+                console.log = (...args) => {
+                    originalConsole.log.apply(console, args);
+                    this.log(args.join(' '), 'info');
+                };
+                
+                console.warn = (...args) => {
+                    originalConsole.warn.apply(console, args);
+                    this.log(args.join(' '), 'warn');
+                };
+                
+                console.error = (...args) => {
+                    originalConsole.error.apply(console, args);
+                    this.log(args.join(' '), 'error');
+                };
+                
+                console.info = (...args) => {
+                    originalConsole.info.apply(console, args);
+                    this.log(args.join(' '), 'info');
+                };
+                
+                console.debug = (...args) => {
+                    originalConsole.debug.apply(console, args);
+                    this.log(args.join(' '), 'debug');
+                };
+            }
+            
+            interceptErrors() {
+                window.addEventListener('error', (e) => {
+                    this.log(`❌ Erreur JavaScript: ${e.message} (${e.filename}:${e.lineno})`, 'error');
+                });
+                
+                window.addEventListener('unhandledrejection', (e) => {
+                    this.log(`❌ Promesse rejetée: ${e.reason}`, 'error');
+                });
+            }
+        }
+        
+        // Initialiser la console après le chargement de la page
+        document.addEventListener('DOMContentLoaded', () => {
+            window.devConsole = new DevConsole();
+        });
+    </script>
+    <!-- Fin dev console -->
+    
+    <script src="kodCompiler.js"></script>
+    <script src="kodEmulator.js"></script>
+    <script src="main.js"></script>
+</body>
+</html>

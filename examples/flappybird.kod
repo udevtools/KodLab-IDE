@@ -1,0 +1,200 @@
+// Jeu: Flappy Bird
+// Volez entre les tuyaux sans les toucher !
+
+// Variables de l'oiseau
+let birdX = 80
+let birdY = 150
+let birdVelocity = 0
+let birdSize = 15
+let gravity = 0.5
+let jumpPower = -8
+
+// Variables des tuyaux
+let pipes = [false, false, false]
+let pipeX = [400, 550, 700]
+let pipeGapY = [120, 140, 100]  // Position du milieu du trou
+let pipeWidth = 40
+let pipeGapSize = 120
+let pipeSpeed = 2
+
+// Variables du jeu
+let score = 0
+let gameOver = false
+let gameStarted = false
+let ground = 280
+
+function start()
+    clearScreen("#87CEEB")
+    playSound("do", 0.3)
+end
+
+function update()
+    if gameOver
+        showGameOver()
+        return
+    end
+    
+    if !gameStarted
+        showStart()
+        if isKeyPressed("space")
+            gameStarted = true
+            playSound("re", 0.2)
+        end
+        return
+    end
+    
+    clearScreen("#87CEEB")
+    updateBird()
+    updatePipes()
+    checkCollisions()
+    drawGame()
+end
+
+function showStart()
+    clearScreen("#87CEEB")
+    
+    // Oiseau stationnaire
+    drawCircle(birdX, birdY, birdSize, "#FFFF00")
+    drawCircle(birdX + 8, birdY - 3, 3, "#000000")  // Oeil
+    drawRect(birdX + 12, birdY, 8, 4, "#FF7F00")     // Bec
+    
+    // Instructions
+    drawText("FLAPPY BIRD", 200, 80, "#FFFFFF")
+    drawText("Appuyez sur ESPACE", 200, 140, "#000000")
+    drawText("pour commencer", 200, 160, "#000000")
+    drawText("ESPACE = Voler", 200, 200, "#666666")
+end
+
+function updateBird()
+    // Saut avec espace
+    if isKeyPressed("space")
+        birdVelocity = jumpPower
+        playSound("mi", 0.1)
+    end
+    
+    // Physique de l'oiseau
+    birdVelocity = birdVelocity + gravity
+    birdY = birdY + birdVelocity
+    
+    // Limites de l'écran
+    if birdY < birdSize
+        birdY = birdSize
+        birdVelocity = 0
+    end
+    
+    if birdY > ground - birdSize
+        gameOver = true
+        playSound("la", 0.5)
+    end
+end
+
+function updatePipes()
+    for i = 0 to 2
+        if pipes[i]
+            pipeX[i] = pipeX[i] - pipeSpeed
+            
+            // Marquer des points quand l'oiseau passe un tuyau
+            if pipeX[i] + pipeWidth == birdX
+                score = score + 1
+                playSound("sol", 0.15)
+            end
+            
+            // Recycler les tuyaux qui sortent de l'écran
+            if pipeX[i] < -pipeWidth
+                pipeX[i] = 400
+                pipeGapY[i] = random(60, 200)
+            end
+        else
+            // Activer les tuyaux progressivement
+            pipes[i] = true
+        end
+    end
+end
+
+function checkCollisions()
+    for i = 0 to 2
+        if pipes[i]
+            // Collision horizontale avec le tuyau
+            if birdX + birdSize > pipeX[i] && birdX - birdSize < pipeX[i] + pipeWidth
+                // Vérifier collision verticale (en dehors du trou)
+                gapTop = pipeGapY[i] - pipeGapSize / 2
+                gapBottom = pipeGapY[i] + pipeGapSize / 2
+                
+                if birdY - birdSize < gapTop || birdY + birdSize > gapBottom
+                    gameOver = true
+                    playSound("si", 0.8)
+                end
+            end
+        end
+    end
+end
+
+function drawGame()
+    // Nuages décoratifs
+    drawCircle(100, 60, 25, "#FFFFFF")
+    drawCircle(120, 55, 30, "#FFFFFF")
+    drawCircle(140, 60, 25, "#FFFFFF")
+    
+    drawCircle(300, 40, 20, "#FFFFFF")
+    drawCircle(315, 35, 25, "#FFFFFF")
+    
+    // Tuyaux
+    for i = 0 to 2
+        if pipes[i]
+            gapTop = pipeGapY[i] - pipeGapSize / 2
+            gapBottom = pipeGapY[i] + pipeGapSize / 2
+            
+            // Tuyau du haut
+            drawRect(pipeX[i], 0, pipeWidth, gapTop, "#00AA00")
+            drawRect(pipeX[i] - 3, gapTop - 15, pipeWidth + 6, 15, "#00CC00")
+            
+            // Tuyau du bas  
+            drawRect(pipeX[i], gapBottom, pipeWidth, ground - gapBottom, "#00AA00")
+            drawRect(pipeX[i] - 3, gapBottom, pipeWidth + 6, 15, "#00CC00")
+        end
+    end
+    
+    // Sol
+    drawRect(0, ground, 400, 20, "#8B4513")
+    drawRect(0, ground + 20, 400, 80, "#654321")
+    
+    // Oiseau avec animation simple
+    drawCircle(birdX, birdY, birdSize, "#FFFF00")
+    drawCircle(birdX + 8, birdY - 3, 3, "#000000")  // Oeil
+    
+    // Bec qui change selon la vélocité
+    if birdVelocity < 0
+        drawRect(birdX + 12, birdY - 2, 8, 4, "#FF7F00")  // Bec vers le haut
+    else
+        drawRect(birdX + 12, birdY + 2, 8, 4, "#FF7F00")  // Bec vers le bas
+    end
+    
+    // Ailes
+    if score % 10 < 5  // Animation simple des ailes
+        drawRect(birdX - 5, birdY - 8, 12, 5, "#FF6600")
+    else
+        drawRect(birdX - 5, birdY + 3, 12, 5, "#FF6600")
+    end
+    
+    // Interface
+    drawText("Score: " + score, 60, 30, "#FFFFFF")
+    if score > 0
+        drawText("Altitude: " + (ground - birdY), 300, 30, "#FFFFFF")
+    end
+end
+
+function showGameOver()
+    clearScreen("#FF6666")
+    drawText("GAME OVER", 200, 100, "#FFFFFF")
+    drawText("Score: " + score, 200, 130, "#FFFF00")
+    
+    if score >= 10
+        drawText("Excellent vol !", 200, 160, "#00FF00")
+    else if score >= 5
+        drawText("Pas mal !", 200, 160, "#FFFF00")  
+    else
+        drawText("Essayez encore !", 200, 160, "#FF7F00")
+    end
+    
+    drawText("Rechargez pour rejouer", 200, 190, "#CCCCCC")
+end

@@ -1,0 +1,712 @@
+// PAND ADVENTURES - Un mini jeu de plateforme
+// Contrôles: Flèches pour se déplacer, Espace pour sauter
+
+// Variables du joueur
+let playerX = 50
+let playerY = 250
+let playerVelocityX = 0
+let playerVelocityY = 0
+let playerSpeed = 3
+let jumpPower = 12
+let onGround = false
+
+// Variables du jeu
+let gravity = 0.5
+let score = 0
+let gameTime = 0
+let gameState = "playing"
+let cameraX = 0
+let levelWidth = 1200
+
+// États des collectibles
+let collectible1Active = true
+let collectible2Active = true
+let collectible3Active = true
+let collectible4Active = true
+let collectible5Active = true
+let collectible6Active = true
+let collectible7Active = true
+let collectible8Active = true
+
+// Variables pour la musique de fond
+let musicBeat = 0
+let musicNoteIndex = 0
+
+function start()
+    clearScreen("#87CEEB")
+    drawText("PAND ADVENTURES", 100, 30, "#000000")
+    drawText("Collectez les bambous et évitez les obstacles!", 50, 50, "#333333")
+    
+    // Initialise le niveau
+    initializeLevel()
+end
+
+function update()
+    if gameState == "playing"
+        updatePlayer()
+        updateEnemies()
+        updateCamera()
+        checkCollisions()
+        
+        drawLevel()
+        drawPlayer()
+        drawCollectibles()
+        drawEnemies()
+        drawUI()
+        
+        gameTime = gameTime + 1
+        
+        // Musique de fond "Ah ! vous dirai-je, maman"
+        playBackgroundMusic()
+    end
+    
+    if gameState == "gameover"
+        drawGameOver()
+    end
+    
+    if gameState == "victory"
+        drawVictory()
+    end
+end
+
+function initializeLevel()
+    // Réinitialise les collectibles
+    collectible1Active = true
+    collectible2Active = true
+    collectible3Active = true
+    collectible4Active = true
+    collectible5Active = true
+    collectible6Active = true
+    collectible7Active = true
+    collectible8Active = true
+end
+
+function updatePlayer()
+    // Contrôles horizontaux
+    if isKeyPressed("left")
+        playerVelocityX = playerVelocityX - 0.5
+    end
+    if isKeyPressed("right")
+        playerVelocityX = playerVelocityX + 0.5
+    end
+    
+    // Limite la vitesse
+    if playerVelocityX > playerSpeed
+        playerVelocityX = playerSpeed
+    end
+    if playerVelocityX < 0 - playerSpeed
+        playerVelocityX = 0 - playerSpeed
+    end
+    
+    // Friction
+    playerVelocityX = playerVelocityX * 0.8
+    
+    // Saut
+    if isKeyPressed("space") && onGround
+        playerVelocityY = 0 - jumpPower
+        onGround = false
+    end
+    
+    // Redémarrage
+    if isKeyPressed("r")
+        restartGame()
+    end
+    
+    // Gravité
+    playerVelocityY = playerVelocityY + gravity
+    
+    // Limite la vitesse de chute
+    if playerVelocityY > 15
+        playerVelocityY = 15
+    end
+    
+    // Mouvement
+    playerX = playerX + playerVelocityX
+    playerY = playerY + playerVelocityY
+    
+    // Limites du monde
+    if playerX < 0
+        playerX = 0
+    end
+    if playerX > levelWidth - 20
+        playerX = levelWidth - 20
+    end
+    
+    // Chute mortelle
+    if playerY > 320
+        gameState = "gameover"
+    end
+    
+    onGround = false
+end
+
+function updateEnemies()
+    // Animation simple des ennemis qui bougent
+    let currentTime = gameTime / 60
+    // Les ennemis bougent de gauche à droite sur leurs plateformes
+end
+
+function updateCamera()
+    // Caméra suit le joueur
+    cameraX = playerX - 200
+    if cameraX < 0
+        cameraX = 0
+    end
+    if cameraX > levelWidth - 400
+        cameraX = levelWidth - 400
+    end
+end
+
+function checkCollisions()
+    // Collision avec les plateformes
+    checkPlatformCollisions()
+    
+    // Collision avec les collectibles
+    checkCollectibleCollisions()
+    
+    // Collision avec les ennemis
+    checkEnemyCollisions()
+end
+
+function checkPlatformCollisions()
+    // Vérifie collision avec toutes les plateformes directement
+    
+    // Sol principal
+    if playerX + 20 > 0 && playerX < 400
+        if playerY + 20 > 300 && playerY < 305 && playerVelocityY > 0
+            playerY = 280
+            playerVelocityY = 0
+            onGround = true
+        end
+    end
+    
+    if playerX + 20 > 500 && playerX < 800
+        if playerY + 20 > 300 && playerY < 305 && playerVelocityY > 0
+            playerY = 280
+            playerVelocityY = 0
+            onGround = true
+        end
+    end
+    
+    if playerX + 20 > 900 && playerX < 1200
+        if playerY + 20 > 300 && playerY < 305 && playerVelocityY > 0
+            playerY = 280
+            playerVelocityY = 0
+            onGround = true
+        end
+    end
+    
+    // Plateformes en hauteur
+    if playerX + 20 > 200 && playerX < 300
+        if playerY + 20 > 250 && playerY < 255 && playerVelocityY > 0
+            playerY = 230
+            playerVelocityY = 0
+            onGround = true
+        end
+    end
+    
+    if playerX + 20 > 400 && playerX < 520
+        if playerY + 20 > 200 && playerY < 205 && playerVelocityY > 0
+            playerY = 180
+            playerVelocityY = 0
+            onGround = true
+        end
+    end
+    
+    if playerX + 20 > 600 && playerX < 680
+        if playerY + 20 > 180 && playerY < 185 && playerVelocityY > 0
+            playerY = 160
+            playerVelocityY = 0
+            onGround = true
+        end
+    end
+    
+    if playerX + 20 > 750 && playerX < 850
+        if playerY + 20 > 220 && playerY < 225 && playerVelocityY > 0
+            playerY = 200
+            playerVelocityY = 0
+            onGround = true
+        end
+    end
+    
+    if playerX + 20 > 950 && playerX < 1070
+        if playerY + 20 > 170 && playerY < 175 && playerVelocityY > 0
+            playerY = 150
+            playerVelocityY = 0
+            onGround = true
+        end
+    end
+    
+    // Plateformes hautes
+    if playerX + 20 > 150 && playerX < 230
+        if playerY + 20 > 150 && playerY < 155 && playerVelocityY > 0
+            playerY = 130
+            playerVelocityY = 0
+            onGround = true
+        end
+    end
+    
+    if playerX + 20 > 500 && playerX < 600
+        if playerY + 20 > 120 && playerY < 125 && playerVelocityY > 0
+            playerY = 100
+            playerVelocityY = 0
+            onGround = true
+        end
+    end
+    
+    if playerX + 20 > 800 && playerX < 900
+        if playerY + 20 > 100 && playerY < 105 && playerVelocityY > 0
+            playerY = 80
+            playerVelocityY = 0
+            onGround = true
+        end
+    end
+end
+
+function checkCollectibleCollisions()
+    // Système de collectibles avec flags individuels
+    if collectible1Active == true
+        if playerX + 20 > 250 && playerX < 265 && playerY + 20 > 230 && playerY < 245
+            collectible1Active = false
+            score = score + 10
+        end
+    end
+    
+    if collectible2Active == true
+        if playerX + 20 > 450 && playerX < 465 && playerY + 20 > 180 && playerY < 195
+            collectible2Active = false
+            score = score + 10
+        end
+    end
+    
+    if collectible3Active == true
+        if playerX + 20 > 650 && playerX < 665 && playerY + 20 > 160 && playerY < 175
+            collectible3Active = false
+            score = score + 10
+        end
+    end
+    
+    if collectible4Active == true
+        if playerX + 20 > 800 && playerX < 815 && playerY + 20 > 200 && playerY < 215
+            collectible4Active = false
+            score = score + 10
+        end
+    end
+    
+    if collectible5Active == true
+        if playerX + 20 > 1000 && playerX < 1015 && playerY + 20 > 150 && playerY < 165
+            collectible5Active = false
+            score = score + 10
+        end
+    end
+    
+    if collectible6Active == true
+        if playerX + 20 > 200 && playerX < 215 && playerY + 20 > 130 && playerY < 145
+            collectible6Active = false
+            score = score + 10
+        end
+    end
+    
+    if collectible7Active == true
+        if playerX + 20 > 550 && playerX < 565 && playerY + 20 > 100 && playerY < 115
+            collectible7Active = false
+            score = score + 10
+        end
+    end
+    
+    if collectible8Active == true
+        if playerX + 20 > 850 && playerX < 865 && playerY + 20 > 80 && playerY < 95
+            collectible8Active = false
+            score = score + 10
+        end
+    end
+    
+    // Vérifie victoire (tous collectés)
+    if collectible1Active == false && collectible2Active == false && collectible3Active == false && collectible4Active == false && collectible5Active == false && collectible6Active == false && collectible7Active == false && collectible8Active == false
+        gameState = "victory"
+    end
+end
+
+function checkEnemyCollisions()
+    // Vérifie collision avec tous les ennemis directement
+    
+    // Ennemi 1 (350, 285)
+    if playerX + 20 > 350 && playerX < 365 && playerY + 20 > 285 && playerY < 300
+        gameState = "gameover"
+    end
+    
+    // Ennemi 2 (700, 285)
+    if playerX + 20 > 700 && playerX < 715 && playerY + 20 > 285 && playerY < 300
+        gameState = "gameover"
+    end
+    
+    // Ennemi 3 (450, 185)
+    if playerX + 20 > 450 && playerX < 465 && playerY + 20 > 185 && playerY < 200
+        gameState = "gameover"
+    end
+    
+    // Ennemi 4 (950, 155)
+    if playerX + 20 > 950 && playerX < 965 && playerY + 20 > 155 && playerY < 170
+        gameState = "gameover"
+    end
+end
+
+function drawLevel()
+    clearScreen("#87CEEB")
+    
+    // Dessine les nuages (arrière-plan)
+    drawRect(100 - cameraX, 40, 30, 20, "#FFFFFF")
+    drawRect(300 - cameraX, 60, 25, 15, "#FFFFFF")
+    drawRect(500 - cameraX, 35, 35, 25, "#FFFFFF")
+    drawRect(800 - cameraX, 45, 28, 18, "#FFFFFF")
+    
+    // Dessine toutes les plateformes directement
+    
+    // Sol principal
+    drawRect(0 - cameraX, 300, 400, 20, "#228B22")
+    drawRect(0 - cameraX, 300, 400, 3, "#32CD32")
+    
+    drawRect(500 - cameraX, 300, 300, 20, "#228B22")
+    drawRect(500 - cameraX, 300, 300, 3, "#32CD32")
+    
+    drawRect(900 - cameraX, 300, 300, 20, "#228B22")
+    drawRect(900 - cameraX, 300, 300, 3, "#32CD32")
+    
+    // Plateformes en hauteur
+    drawRect(200 - cameraX, 250, 100, 15, "#228B22")
+    drawRect(200 - cameraX, 250, 100, 3, "#32CD32")
+    
+    drawRect(400 - cameraX, 200, 120, 15, "#228B22")
+    drawRect(400 - cameraX, 200, 120, 3, "#32CD32")
+    
+    drawRect(600 - cameraX, 180, 80, 15, "#228B22")
+    drawRect(600 - cameraX, 180, 80, 3, "#32CD32")
+    
+    drawRect(750 - cameraX, 220, 100, 15, "#228B22")
+    drawRect(750 - cameraX, 220, 100, 3, "#32CD32")
+    
+    drawRect(950 - cameraX, 170, 120, 15, "#228B22")
+    drawRect(950 - cameraX, 170, 120, 3, "#32CD32")
+    
+    // Plateformes hautes
+    drawRect(150 - cameraX, 150, 80, 15, "#228B22")
+    drawRect(150 - cameraX, 150, 80, 3, "#32CD32")
+    
+    drawRect(500 - cameraX, 120, 100, 15, "#228B22")
+    drawRect(500 - cameraX, 120, 100, 3, "#32CD32")
+    
+    drawRect(800 - cameraX, 100, 100, 15, "#228B22")
+    drawRect(800 - cameraX, 100, 100, 3, "#32CD32")
+end
+
+function drawPlayer()
+    // Corps du panda
+    drawRect(playerX - cameraX, playerY, 20, 20, "#FFFFFF")
+    
+    // Oreilles
+    drawRect(playerX - cameraX + 2, playerY - 2, 4, 4, "#000000")
+    drawRect(playerX - cameraX + 14, playerY - 2, 4, 4, "#000000")
+    
+    // Yeux
+    drawRect(playerX - cameraX + 4, playerY + 4, 3, 3, "#000000")
+    drawRect(playerX - cameraX + 13, playerY + 4, 3, 3, "#000000")
+    
+    // Pattes
+    drawRect(playerX - cameraX + 2, playerY + 15, 4, 5, "#000000")
+    drawRect(playerX - cameraX + 14, playerY + 15, 4, 5, "#000000")
+end
+
+function drawCollectibles()
+    // Animation simple
+    let offset = (gameTime / 10) % 3
+    
+    // Dessine chaque collectible s'il est actif
+    if collectible1Active == true
+        drawRect(250 - cameraX, 230 - offset, 15, 15, "#32CD32")
+        drawRect(252 - cameraX, 232 - offset, 11, 11, "#228B22")
+        drawRect(256 - cameraX, 236 - offset, 3, 3, "#FFFF00")
+    end
+    
+    if collectible2Active == true
+        drawRect(450 - cameraX, 180 - offset, 15, 15, "#32CD32")
+        drawRect(452 - cameraX, 182 - offset, 11, 11, "#228B22")
+        drawRect(456 - cameraX, 186 - offset, 3, 3, "#FFFF00")
+    end
+    
+    if collectible3Active == true
+        drawRect(650 - cameraX, 160 - offset, 15, 15, "#32CD32")
+        drawRect(652 - cameraX, 162 - offset, 11, 11, "#228B22")
+        drawRect(656 - cameraX, 166 - offset, 3, 3, "#FFFF00")
+    end
+    
+    if collectible4Active == true
+        drawRect(800 - cameraX, 200 - offset, 15, 15, "#32CD32")
+        drawRect(802 - cameraX, 202 - offset, 11, 11, "#228B22")
+        drawRect(806 - cameraX, 206 - offset, 3, 3, "#FFFF00")
+    end
+    
+    if collectible5Active == true
+        drawRect(1000 - cameraX, 150 - offset, 15, 15, "#32CD32")
+        drawRect(1002 - cameraX, 152 - offset, 11, 11, "#228B22")
+        drawRect(1006 - cameraX, 156 - offset, 3, 3, "#FFFF00")
+    end
+    
+    if collectible6Active == true
+        drawRect(200 - cameraX, 130 - offset, 15, 15, "#32CD32")
+        drawRect(202 - cameraX, 132 - offset, 11, 11, "#228B22")
+        drawRect(206 - cameraX, 136 - offset, 3, 3, "#FFFF00")
+    end
+    
+    if collectible7Active == true
+        drawRect(550 - cameraX, 100 - offset, 15, 15, "#32CD32")
+        drawRect(552 - cameraX, 102 - offset, 11, 11, "#228B22")
+        drawRect(556 - cameraX, 106 - offset, 3, 3, "#FFFF00")
+    end
+    
+    if collectible8Active == true
+        drawRect(850 - cameraX, 80 - offset, 15, 15, "#32CD32")
+        drawRect(852 - cameraX, 82 - offset, 11, 11, "#228B22")
+        drawRect(856 - cameraX, 86 - offset, 3, 3, "#FFFF00")
+    end
+end
+
+function drawEnemies()
+    // Dessine tous les ennemis directement
+    
+    // Ennemi 1 (350, 285)
+    drawRect(350 - cameraX, 285, 15, 15, "#8B0000")
+    drawRect(353 - cameraX, 288, 9, 9, "#FF0000")
+    drawRect(357 - cameraX, 283, 1, 8, "#FF0000")
+    drawRect(354 - cameraX, 286, 1, 5, "#FF0000")
+    drawRect(360 - cameraX, 286, 1, 5, "#FF0000")
+    
+    // Ennemi 2 (700, 285)
+    drawRect(700 - cameraX, 285, 15, 15, "#8B0000")
+    drawRect(703 - cameraX, 288, 9, 9, "#FF0000")
+    drawRect(707 - cameraX, 283, 1, 8, "#FF0000")
+    drawRect(704 - cameraX, 286, 1, 5, "#FF0000")
+    drawRect(710 - cameraX, 286, 1, 5, "#FF0000")
+    
+    // Ennemi 3 (450, 185)
+    drawRect(450 - cameraX, 185, 15, 15, "#8B0000")
+    drawRect(453 - cameraX, 188, 9, 9, "#FF0000")
+    drawRect(457 - cameraX, 183, 1, 8, "#FF0000")
+    drawRect(454 - cameraX, 186, 1, 5, "#FF0000")
+    drawRect(460 - cameraX, 186, 1, 5, "#FF0000")
+    
+    // Ennemi 4 (950, 155)
+    drawRect(950 - cameraX, 155, 15, 15, "#8B0000")
+    drawRect(953 - cameraX, 158, 9, 9, "#FF0000")
+    drawRect(957 - cameraX, 153, 1, 8, "#FF0000")
+    drawRect(954 - cameraX, 156, 1, 5, "#FF0000")
+    drawRect(960 - cameraX, 156, 1, 5, "#FF0000")
+end
+
+function drawUI()
+    // Score
+    drawText("Score: " + score, 40, 25, "#000000")
+    
+    // Contrôles
+    drawText("Flèches: Bouger | Espace: Sauter | R: Redémarrer", 10, 350, "#333333")
+    
+    // Compteur de bambous restants (calcul direct)
+    let remaining = 0
+    if collectible1Active == true
+        remaining = remaining + 1
+    end
+    if collectible2Active == true
+        remaining = remaining + 1
+    end
+    if collectible3Active == true
+        remaining = remaining + 1
+    end
+    if collectible4Active == true
+        remaining = remaining + 1
+    end
+    if collectible5Active == true
+        remaining = remaining + 1
+    end
+    if collectible6Active == true
+        remaining = remaining + 1
+    end
+    if collectible7Active == true
+        remaining = remaining + 1
+    end
+    if collectible8Active == true
+        remaining = remaining + 1
+    end
+    
+    drawText("Bambous restants: " + remaining, 250, 25, "#000000")
+end
+
+function drawGameOver()
+    clearScreen("#000000")
+    drawText("GAME OVER!", 150, 150, "#FF0000")
+    drawText("Score final: " + score, 140, 180, "#FFFFFF")
+end
+
+function drawVictory()
+    clearScreen("#FFD700")
+    drawText("VICTOIRE!", 150, 150, "#000000")
+    drawText("Tous les bambous collectés!", 110, 180, "#000000")
+    drawText("Score final: " + score, 140, 210, "#000000")
+end
+
+function restartGame()
+    playerX = 50
+    playerY = 250
+    playerVelocityX = 0
+    playerVelocityY = 0
+    onGround = false
+    score = 0
+    gameTime = 0
+    gameState = "playing"
+    cameraX = 0
+    musicBeat = 0
+    musicNoteIndex = 0
+    initializeLevel()
+end
+
+function playBackgroundMusic()
+    // Mélodie "Ah ! vous dirai-je, maman" avec pauses authentiques
+    // Do - Do - Sol - Sol - La - La - Sol [pause] - Fa - Fa - Mi - Mi - Ré - Ré - Do [pause longue]
+    // Sol - Sol - Fa - Fa - Mi - Mi - Ré [pause] - Sol - Sol - Fa - Fa - Mi - Mi - Ré [pause]
+    // Do - Do - Sol - Sol - La - La - Sol [pause] - Fa - Fa - Mi - Mi - Ré - Ré - Do [pause finale]
+    
+    musicBeat = musicBeat + 1
+    
+    // Gère les pauses selon les phrases musicales
+    let currentBeatTime = 35
+    
+    // Pauses courtes après chaque phrase
+    if musicNoteIndex == 7 || musicNoteIndex == 23 || musicNoteIndex == 31 || musicNoteIndex == 39  
+        currentBeatTime = 50
+    // Pause plus longue à la moitié et pause finale
+    else if musicNoteIndex == 15 || musicNoteIndex == 47  
+        currentBeatTime = 80
+    end
+    
+    if musicBeat >= currentBeatTime
+        musicBeat = 0
+        
+        // Première phrase : Do - Do - Sol - Sol - La - La - Sol [pause]
+        if musicNoteIndex == 0
+            playSound("do", 0.08)
+        else if musicNoteIndex == 1
+            playSound("do", 0.08)
+        else if musicNoteIndex == 2
+            playSound("sol", 0.08)
+        else if musicNoteIndex == 3
+            playSound("sol", 0.08)
+        else if musicNoteIndex == 4
+            playSound("la", 0.08)
+        else if musicNoteIndex == 5
+            playSound("la", 0.08)
+        else if musicNoteIndex == 6
+            playSound("sol", 0.08)
+        else if musicNoteIndex == 7
+            // Pause (ne joue rien)
+        
+        // Deuxième phrase : Fa - Fa - Mi - Mi - Ré - Ré - Do [pause longue]
+        else if musicNoteIndex == 8
+            playSound("fa", 0.08)
+        else if musicNoteIndex == 9
+            playSound("fa", 0.08)
+        else if musicNoteIndex == 10
+            playSound("mi", 0.08)
+        else if musicNoteIndex == 11
+            playSound("mi", 0.08)
+        else if musicNoteIndex == 12
+            playSound("re", 0.08)
+        else if musicNoteIndex == 13
+            playSound("re", 0.08)
+        else if musicNoteIndex == 14
+            playSound("do", 0.08)
+        else if musicNoteIndex == 15
+            // Pause longue (ne joue rien)
+        
+        // Troisième phrase : Sol - Sol - Fa - Fa - Mi - Mi - Ré [pause]
+        else if musicNoteIndex == 16
+            playSound("sol", 0.08)
+        else if musicNoteIndex == 17
+            playSound("sol", 0.08)
+        else if musicNoteIndex == 18
+            playSound("fa", 0.08)
+        else if musicNoteIndex == 19
+            playSound("fa", 0.08)
+        else if musicNoteIndex == 20
+            playSound("mi", 0.08)
+        else if musicNoteIndex == 21
+            playSound("mi", 0.08)
+        else if musicNoteIndex == 22
+            playSound("re", 0.08)
+        else if musicNoteIndex == 23
+            // Pause (ne joue rien)
+        
+        // Quatrième phrase : Sol - Sol - Fa - Fa - Mi - Mi - Ré [pause]
+        else if musicNoteIndex == 24
+            playSound("sol", 0.08)
+        else if musicNoteIndex == 25
+            playSound("sol", 0.08)
+        else if musicNoteIndex == 26
+            playSound("fa", 0.08)
+        else if musicNoteIndex == 27
+            playSound("fa", 0.08)
+        else if musicNoteIndex == 28
+            playSound("mi", 0.08)
+        else if musicNoteIndex == 29
+            playSound("mi", 0.08)
+        else if musicNoteIndex == 30
+            playSound("re", 0.08)
+        else if musicNoteIndex == 31
+            // Pause (ne joue rien)
+        
+        // Cinquième phrase : Do - Do - Sol - Sol - La - La - Sol [pause]
+        else if musicNoteIndex == 32
+            playSound("do", 0.08)
+        else if musicNoteIndex == 33
+            playSound("do", 0.08)
+        else if musicNoteIndex == 34
+            playSound("sol", 0.08)
+        else if musicNoteIndex == 35
+            playSound("sol", 0.08)
+        else if musicNoteIndex == 36
+            playSound("la", 0.08)
+        else if musicNoteIndex == 37
+            playSound("la", 0.08)
+        else if musicNoteIndex == 38
+            playSound("sol", 0.08)
+        else if musicNoteIndex == 39
+            // Pause (ne joue rien)
+        
+        // Sixième phrase finale : Fa - Fa - Mi - Mi - Ré - Ré - Do [pause finale]
+        else if musicNoteIndex == 40
+            playSound("fa", 0.08)
+        else if musicNoteIndex == 41
+            playSound("fa", 0.08)
+        else if musicNoteIndex == 42
+            playSound("mi", 0.08)
+        else if musicNoteIndex == 43
+            playSound("mi", 0.08)
+        else if musicNoteIndex == 44
+            playSound("re", 0.08)
+        else if musicNoteIndex == 45
+            playSound("re", 0.08)
+        else if musicNoteIndex == 46
+            playSound("do", 0.08)
+        else if musicNoteIndex == 47
+            // Pause finale (ne joue rien)
+        end
+        
+        // Passe à la note suivante
+        musicNoteIndex = musicNoteIndex + 1
+        
+        // Remet à zéro à la fin de la mélodie (48 indices au total, incluant les pauses)
+        if musicNoteIndex > 47
+            musicNoteIndex = 0
+        end
+    end
+end
+
+
+

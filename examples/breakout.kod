@@ -1,0 +1,221 @@
+// Jeu: Breakout (Casse-briques)
+// Détruisez toutes les briques avec la balle et la raquette !
+
+// Variables de la raquette
+let paddleX = 175
+let paddleY = 280
+let paddleWidth = 50
+let paddleHeight = 10
+let paddleSpeed = 5
+
+// Variables de la balle
+let ballX = 200
+let ballY = 250
+let ballSpeedX = 3
+let ballSpeedY = -3
+let ballSize = 6
+let ballActive = true
+
+// Variables des briques (grille 8x5 = 40 briques)
+let brickRows = 5
+let brickCols = 8
+let brickWidth = 48
+let brickHeight = 15
+let brickStartX = 8
+let brickStartY = 50
+// Tableau simple de 40 briques (toutes actives au départ)
+let bricksActive = [true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true]
+
+// Variables du jeu
+let score = 0
+let lives = 3
+let gameWon = false
+let gameLost = false
+let bricksRemaining = 40
+
+function start()
+    clearScreen("#000033")
+    playSound("do", 0.3)
+end
+
+function update()
+    if gameLost
+        showGameOver()
+        return
+    end
+    
+    if gameWon
+        showVictory()
+        return
+    end
+    
+    clearScreen("#000033")
+    
+    // Mouvement de la raquette
+    updatePaddle()
+    
+    // Mouvement de la balle
+    updateBall()
+    
+    // Collisions
+    checkCollisions()
+    
+    // Vérification conditions de fin
+    checkWinLose()
+    
+    // Affichage
+    drawGame()
+end
+
+function updatePaddle()
+    if isKeyPressed("left") && paddleX > 0
+        paddleX = paddleX - paddleSpeed
+    end
+    
+    if isKeyPressed("right") && paddleX < 400 - paddleWidth
+        paddleX = paddleX + paddleSpeed
+    end
+end
+
+function updateBall()
+    if !ballActive
+        return
+    end
+    
+    ballX = ballX + ballSpeedX
+    ballY = ballY + ballSpeedY
+    
+    // Rebonds sur les murs latéraux
+    if ballX <= ballSize || ballX >= 400 - ballSize
+        ballSpeedX = ballSpeedX * -1
+        playSound("re", 0.1)
+    end
+    
+    // Rebond sur le plafond
+    if ballY <= ballSize
+        ballSpeedY = ballSpeedY * -1
+        playSound("re", 0.1)
+    end
+    
+    // Balle perdue (sol)
+    if ballY > 300
+        lives = lives - 1
+        resetBall()
+        playSound("si", 0.3)
+    end
+end
+
+function checkCollisions()
+    if !ballActive
+        return
+    end
+    
+    // Collision avec la raquette  
+    if ballY + ballSize >= paddleY && ballY - ballSize <= paddleY + paddleHeight && ballX >= paddleX && ballX <= paddleX + paddleWidth
+        ballSpeedY = ballSpeedY * -1
+        ballY = paddleY - ballSize - 1
+        playSound("mi", 0.15)
+    end
+    
+    // Collision avec les briques
+    for row = 0 to 4
+        for col = 0 to 7
+            brickIndex = row * 8 + col
+            if bricksActive[brickIndex]
+                brickX = brickStartX + (col * brickWidth)
+                brickY = brickStartY + (row * brickHeight)
+                
+                if ballX + ballSize >= brickX && ballX - ballSize <= brickX + brickWidth && ballY + ballSize >= brickY && ballY - ballSize <= brickY + brickHeight
+                    // Détruire la brique
+                    bricksActive[brickIndex] = false
+                    bricksRemaining = bricksRemaining - 1
+                    score = score + 10
+                    
+                    // Rebond de la balle
+                    ballSpeedY = ballSpeedY * -1
+                    playSound("sol", 0.2)
+                end
+            end
+        end
+    end
+end
+
+function resetBall()
+    ballX = 200
+    ballY = 250
+    ballSpeedX = 3
+    ballSpeedY = -3
+    ballActive = true
+end
+
+function checkWinLose()
+    if bricksRemaining <= 0
+        gameWon = true
+    end
+    
+    if lives <= 0
+        gameLost = true
+    end
+end
+
+function drawGame()
+    // Raquette
+    drawRect(paddleX, paddleY, paddleWidth, paddleHeight, "#FFFFFF")
+    
+    // Balle
+    if ballActive
+        drawCircle(ballX, ballY, ballSize, "#FFFF00")
+    end
+    
+    // Briques colorées par rangée
+    for row = 0 to 4
+        for col = 0 to 7
+            brickIndex = row * 8 + col
+            if bricksActive[brickIndex]
+                brickX = brickStartX + (col * brickWidth)
+                brickY = brickStartY + (row * brickHeight)
+                
+                // Couleurs par rangée
+                color = "#FF0000"  // Rouge
+                if row == 1
+                    color = "#FF7F00"  // Orange
+                end
+                if row == 2  
+                    color = "#FFFF00"  // Jaune
+                end
+                if row == 3
+                    color = "#00FF00"  // Vert
+                end
+                if row == 4
+                    color = "#0000FF"  // Bleu
+                end
+                
+                drawRect(brickX, brickY, brickWidth - 2, brickHeight - 2, color)
+            end
+        end
+    end
+    
+    // Interface
+    drawText("BREAKOUT", 200, 20, "#FFFFFF")
+    drawText("Score: " + score, 60, 20, "#FFFF00")
+    drawText("Vies: " + lives, 340, 20, "#FF0000")
+    
+    if lives > 0 && bricksRemaining > 0
+        drawText("Flèches Gauche/Droite pour bouger", 200, 295, "#CCCCCC")
+    end
+end
+
+function showGameOver()
+    clearScreen("#330000")
+    drawText("GAME OVER", 200, 130, "#FF0000")
+    drawText("Score final: " + score, 200, 160, "#FFFFFF")
+    drawText("Rechargez pour rejouer", 200, 190, "#CCCCCC")
+end
+
+function showVictory()
+    clearScreen("#003300")
+    drawText("VICTOIRE!", 200, 130, "#00FF00")
+    drawText("Toutes les briques détruites!", 200, 160, "#FFFFFF")
+    drawText("Score final: " + score, 200, 180, "#FFFF00")
+    drawText("Rechargez pour rejouer", 200, 210, "#CCCCCC")
+end

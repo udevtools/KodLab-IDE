@@ -1,0 +1,400 @@
+// Exemple simple de plateforme inspiré de Mario Bros
+// Contrôles: Flèches gauche/droite, Espace pour sauter (appuyez sur Espace aussi pour redémarrer après GAME OVER)
+
+// Joueur
+let px = 40
+let py = 260
+let pvx = 0
+let pvy = 0
+let speed = 4
+let jumpPower = 11
+let onGround = false
+let facing = "right"
+let lives = 3
+let score = 0
+let powerUp = false
+let powerUpTimer = 0
+
+// Monde
+let gravity = 0.6
+let cameraX = 0
+let levelWidth = 1600
+let gameState = "playing"
+let time = 0
+
+// Collectibles
+let coinX = [150, 350, 560, 750, 1160, 1380]
+let coinY = [220, 260, 200, 260, 150, 260]
+let coinActive = [true, true, true, true, true, true]
+
+// Power-up champignon
+let mushroomX = 420
+let mushroomY = 260
+let mushroomActive = true
+
+// Ennemis simples (goombas) - positions et directions
+let e1x = 300
+let e1y = 280
+let e1dir = 1
+let e2x = 700
+let e2y = 280
+let e2dir = -1
+let eSpeed = 1
+let e1Alive = true
+let e2Alive = true
+
+function start()
+    clearScreen("#7ec0ee")
+    drawText("MARIO MINI", 140, 20, "#000000")
+    drawText("Objectif: collectez toutes les pièces et atteignez le drapeau !", 10, 40, "#333")
+end
+
+function update()
+    if gameState == "playing"
+        time = time + 1
+        handleInput()
+        applyPhysics()
+        updateEnemies()
+        updatePowerUp()
+        updateCamera()
+        checkCollisions()
+        drawWorld()
+        drawPlayer()
+        drawEnemies()
+        drawUI()
+        checkWin()
+    end
+
+    if gameState == "gameover"
+        drawGameOver()
+        if isKeyPressed("space")
+            restart()
+        end
+    end
+
+    if gameState == "victory"
+        drawVictory()
+        if isKeyPressed("space")
+            restart()
+        end
+    end
+end
+
+function handleInput()
+    // Mouvement horizontal
+    if isKeyPressed("left")
+        pvx = pvx - 0.4
+        facing = "left"
+    end
+    if isKeyPressed("right")
+        pvx = pvx + 0.4
+        facing = "right"
+    end
+
+    // Limites de vitesse
+    if pvx > speed
+        pvx = speed
+    end
+    if pvx < 0 - speed
+        pvx = 0 - speed
+    end
+
+    // Friction
+    pvx = pvx * 0.8
+
+    // Saut
+    if isKeyPressed("space") && onGround
+        pvy = 0 - jumpPower
+        onGround = false
+    end
+
+    // Redémarrage manuel : (désactivé ici pour éviter conflit avec le saut)
+end
+
+function applyPhysics()
+    // Gravité
+    pvy = pvy + gravity
+    if pvy > 14
+        pvy = 14
+    end
+
+    // Position
+    px = px + pvx
+    py = py + pvy
+
+    // Limites du monde
+    if px < 0
+        px = 0
+    end
+    if px > levelWidth - 18
+        px = levelWidth - 18
+    end
+
+    // Mort si tombe
+    if py > 340
+        loseLife()
+    end
+
+    onGround = false
+end
+
+function updateEnemies()
+    // Ennemi 1
+    if e1Alive
+        e1x = e1x + e1dir * eSpeed
+        if e1x < 260
+            e1dir = 1
+        end
+        if e1x > 340
+            e1dir = -1
+        end
+    end
+
+    // Ennemi 2
+    if e2Alive
+        e2x = e2x + e2dir * eSpeed
+        if e2x < 660
+            e2dir = 1
+        end
+        if e2x > 740
+            e2dir = -1
+        end
+    end
+end
+
+function updateCamera()
+    cameraX = px - 200
+    if cameraX < 0
+        cameraX = 0
+    end
+    if cameraX > levelWidth - 400
+        cameraX = levelWidth - 400
+    end
+end
+
+function checkCollisions()
+    // Sol principal (optimisé)
+    checkPlatformCollision(0, 1600, 300, 282)
+    
+    // Plateformes
+    checkPlatformCollision(200, 280, 240, 222)
+    checkPlatformCollision(520, 620, 220, 202) 
+    checkPlatformCollision(1100, 1220, 180, 162)
+    
+    // Collectibles
+    checkCoinCollisions()
+    checkMushroomCollision()
+    checkEnemyCollisions()
+end
+
+function checkPlatformCollision(x1, x2, groundY, landY)
+    if px + 16 > x1 && px < x2
+        if py + 18 > groundY && py < groundY + 5 && pvy > 0
+            py = landY
+            pvy = 0
+            onGround = true
+        end
+    end
+end
+
+function checkCoinCollisions()
+    for i = 0 to 5
+        if coinActive[i] == true
+            if px + 16 > coinX[i] && px < coinX[i] + 15 && py + 18 > coinY[i] && py < coinY[i] + 20
+                coinActive[i] = false
+                score = score + 100
+                playSound("sol", 0.3)
+            end
+        end
+    end
+end
+
+function checkMushroomCollision()
+    if mushroomActive == true
+        if px + 16 > mushroomX && px < mushroomX + 20 && py + 18 > mushroomY && py < mushroomY + 20
+            mushroomActive = false
+            powerUp = true
+            powerUpTimer = 600  // 10 secondes à 60 FPS
+            score = score + 500
+            playSound("do", 0.5)
+        end
+    end
+end
+
+function updatePowerUp()
+    if powerUp == true
+        powerUpTimer = powerUpTimer - 1
+        if powerUpTimer <= 0
+            powerUp = false
+        end
+    end
+end
+
+function checkEnemyCollisions()
+    checkSingleEnemyCollision(e1x, e1y, e1Alive, 1)
+    checkSingleEnemyCollision(e2x, e2y, e2Alive, 2)
+end
+
+function checkSingleEnemyCollision(ex, ey, alive, enemyId)
+    if alive == false
+        return
+    end
+    
+    if px + 16 > ex && px < ex + 16 && py + 18 > ey && py < ey + 16
+        // Stomp (écrasement)
+        if (py + 18) - ey < 8 && pvy > 0
+            if enemyId == 1
+                e1Alive = false
+            end
+            if enemyId == 2
+                e2Alive = false
+            end
+            score = score + 200
+            pvy = 0 - (jumpPower / 2)
+            playSound("mi", 0.3)
+        else
+            // Collision normale
+            if powerUp == false
+                loseLife()
+            else
+                // Avec power-up, on survit mais on perd le power-up
+                powerUp = false
+                powerUpTimer = 0
+                playSound("fa", 0.3)
+            end
+        end
+    end
+end
+
+function loseLife()
+    lives = lives - 1
+    if lives <= 0
+        gameState = "gameover"
+    else
+        // réinitialiser position
+        px = 40
+        py = 260
+        pvx = 0
+        pvy = 0
+        cameraX = 0
+    end
+end
+
+function drawWorld()
+    // Arrière-plan ciel
+    clearScreen("#7ec0ee")
+
+    // Sol et décor
+    drawRect(0 - cameraX, 300, 400, 20, "#2e8b57")
+    drawRect(400 - cameraX, 300, 500, 20, "#2e8b57")
+    drawRect(900 - cameraX, 300, 700, 20, "#2e8b57")
+
+    // Plateformes
+    drawRect(200 - cameraX, 240, 80, 12, "#8b5a2b")
+    drawRect(520 - cameraX, 220, 100, 12, "#8b5a2b")
+    drawRect(1100 - cameraX, 180, 120, 12, "#8b5a2b")
+
+    // Drapeau de fin
+    drawRect(1580 - cameraX, 240, 8, 60, "#c62828")
+    drawRect(1588 - cameraX, 240, 20, 12, "#ffffff")
+
+    // Pièces
+    for i = 0 to 5
+        if coinActive[i] == true
+            drawCircle(coinX[i] - cameraX, coinY[i], 6, "#ffd700")
+        end
+    end
+    
+    // Power-up champignon
+    if mushroomActive == true
+        drawRect(mushroomX - cameraX, mushroomY, 20, 20, "#ff6b6b")
+        drawCircle(mushroomX + 10 - cameraX, mushroomY + 8, 8, "#ffffff")
+        drawRect(mushroomX + 7 - cameraX, mushroomY + 5, 6, 3, "#ff6b6b")
+    end
+
+    // Nuages simples
+    drawRect(80 - cameraX, 50, 40, 20, "#ffffff")
+    drawRect(320 - cameraX, 70, 30, 18, "#ffffff")
+    drawRect(600 - cameraX, 40, 40, 22, "#ffffff")
+end
+
+function drawPlayer()
+    // Taille variable selon le power-up
+    playerColor = "#d32f2f"
+    playerSize = 18
+    
+    if powerUp == true
+        playerColor = "#ff9800"
+        playerSize = 22
+        py = py - 2  // Légèrement plus haut
+    end
+    
+    if facing == "right"
+        drawRect(px - cameraX, py, 16, playerSize, playerColor)
+    else
+        drawRect(px - cameraX, py, 16, playerSize, "#a5271b")
+    end
+    
+    // Effet visuel du power-up
+    if powerUp == true && (time % 20) < 10
+        drawRect(px - cameraX - 2, py - 2, 20, playerSize + 4, "#ffeb3b")
+    end
+end
+
+function drawEnemies()
+    // Goombas
+    if e1Alive
+        drawRect(e1x - cameraX, e1y, 16, 16, "#6d4c41")
+    end
+    if e2Alive
+        drawRect(e2x - cameraX, e2y, 16, 16, "#6d4c41")
+    end
+end
+
+function drawUI()
+    drawText("Score: " + score, 40, 18, "#000")
+    drawText("Lives: " + lives, 200, 18, "#000")
+    if powerUp == true
+        drawText("POWER UP! " + (powerUpTimer / 60), 280, 18, "#ff9800")
+    end
+end
+
+function checkWin()
+    // Victoire si atteint drapeau
+    if px > 1580
+        gameState = "victory"
+    end
+end
+
+function drawGameOver()
+    drawText("GAME OVER", 100, 150, "#000")
+end
+
+function drawVictory()
+    drawText("VICTOIRE !", 100, 150, "#000")
+end
+
+function restart()
+    // Réinitialise l'état du jeu
+    px = 40
+    py = 260
+    pvx = 0
+    pvy = 0
+    lives = 3
+    score = 0
+    time = 0
+    cameraX = 0
+    gameState = "playing"
+    powerUp = false
+    powerUpTimer = 0
+    
+    // Reset collectibles
+    coinActive = [true, true, true, true, true, true]
+    mushroomActive = true
+    
+    // Reset ennemis
+    e1x = 300
+    e2x = 700
+    e1Alive = true
+    e2Alive = true
+end

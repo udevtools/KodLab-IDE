@@ -1,0 +1,296 @@
+// Jeu PANG - Classique arcade
+// Détruisez les balles rebondissantes avec votre harpon !
+
+// Variables du joueur
+let playerX = 200
+let playerY = 280
+let playerWidth = 20
+let playerHeight = 15
+let playerSpeed = 3
+
+// Variables du harpon
+let harpoonActive = false
+let harpoonX = 0
+let harpoonY = 0
+let harpoonSpeed = 5
+let harpoonWidth = 3
+
+// Variables des balles (max 8 balles)
+let ballCount = 1
+let ballX = [150, 0, 0, 0, 0, 0, 0, 0]
+let ballY = [50, 0, 0, 0, 0, 0, 0, 0]
+let ballVX = [2, 0, 0, 0, 0, 0, 0, 0]
+let ballVY = [1, 0, 0, 0, 0, 0, 0, 0]
+let ballSize = [3, 0, 0, 0, 0, 0, 0, 0]  // 3=grosse, 2=moyenne, 1=petite
+let ballActive = [true, false, false, false, false, false, false, false]
+
+// Variables du jeu
+let gameWon = false
+let gameLost = false
+let score = 0
+
+function start()
+    clearScreen("#000044")
+    playSound("do", 0.3)
+    drawText("PANG - Prêt à commencer!", 120, 150, "#FFFF00")
+end
+
+function update()
+    if gameLost
+        gameOverScreen()
+        return
+    end
+    
+    if gameWon
+        victoryScreen()
+        return
+    end
+    
+    clearScreen("#000044")
+    
+    // Mouvement du joueur
+    updatePlayer()
+    
+    // Gestion du harpon
+    updateHarpoon()
+    
+    // Mouvement des balles
+    updateBalls()
+    
+    // Collisions
+    checkCollisions()
+    
+    // Vérification victoire
+    checkWinCondition()
+    
+    // Affichage
+    drawGame()
+end
+
+function updatePlayer()
+    // Déplacement gauche/droite
+    if isKeyPressed("left") && playerX > 0
+        playerX = playerX - playerSpeed
+    end
+    
+    if isKeyPressed("right") && playerX < 380
+        playerX = playerX + playerSpeed
+    end
+    
+    // Tir du harpon
+    if isKeyPressed("space") && !harpoonActive
+        harpoonActive = true
+        harpoonX = playerX + 8
+        harpoonY = playerY
+        playSound("mi", 0.1)
+    end
+end
+
+function updateHarpoon()
+    if harpoonActive
+        harpoonY = harpoonY - harpoonSpeed
+        
+        // Le harpon disparaît en haut de l'écran
+        if harpoonY < 0
+            harpoonActive = false
+        end
+    end
+end
+
+function updateBalls()
+    for i = 0 to 7
+        if ballActive[i]
+            // Mouvement
+            ballX[i] = ballX[i] + ballVX[i]
+            ballY[i] = ballY[i] + ballVY[i]
+            
+            // Rebonds sur les murs (gauche/droite)
+            size = ballSize[i]
+            ballRadius = getBallRadius()
+            if ballX[i] < ballRadius
+                ballVX[i] = ballVX[i] * -1
+                playSound("re", 0.05)
+            end
+            if ballX[i] > 400 - ballRadius
+                ballVX[i] = ballVX[i] * -1
+                playSound("re", 0.05)
+            end
+            
+            // Rebond sur le plafond
+            if ballY[i] < ballRadius
+                ballVY[i] = ballVY[i] * -1
+                playSound("re", 0.05)
+            end
+            
+            // Rebond sur le sol
+            if ballY[i] > 300 - ballRadius
+                ballVY[i] = ballVY[i] * -1
+                playSound("re", 0.05)
+            end
+            
+            // Gravité (les balles tombent)
+            ballVY[i] = ballVY[i] + 0.1
+        end
+    end
+end
+
+function checkCollisions()
+    // Collision harpon avec balles (ligne verticale vs cercle)
+    if harpoonActive
+        for i = 0 to 7
+        if ballActive[i]
+            size = ballSize[i]
+            ballRadius = getBallRadius()
+            
+            // Vérification collision ligne verticale (harpon) avec cercle (balle)
+            // Le harpon va de (harpoonX, harpoonY) à (harpoonX, playerY)
+            
+            // Distance horizontale entre le centre de la balle et la ligne du harpon
+            horizontalDistance = ballX[i] - harpoonX
+            if horizontalDistance < 0
+                horizontalDistance = horizontalDistance * -1  // Valeur absolue
+            end
+            
+            // Vérification si la balle est assez proche horizontalement du harpon
+            if horizontalDistance <= ballRadius
+                // Vérification si la balle est dans la zone verticale du harpon
+                if ballY[i] >= harpoonY && ballY[i] <= playerY
+                    // Collision détectée !
+                    harpoonActive = false
+                    splitBall(i)
+                    playSound("sol", 0.2)
+                end
+            end
+            end
+        end
+    end
+    
+    // Collision joueur avec balles
+    for i = 0 to 7
+        if ballActive[i]
+            size = ballSize[i]
+            ballRadius = getBallRadius()
+            
+            // Collision rectangulaire simplifiée
+            if ballX[i] > playerX - ballRadius && ballX[i] < playerX + playerWidth + ballRadius && ballY[i] > playerY - ballRadius && ballY[i] < playerY + playerHeight + ballRadius
+                gameLost = true
+                playSound("do", 0.5)
+            end
+        end
+    end
+end
+
+function splitBall(ballIndex)
+    ballActive[ballIndex] = false
+    score = score + (4 - ballSize[ballIndex]) * 100
+    
+    // Si c'est une petite balle, elle disparaît complètement
+    if ballSize[ballIndex] == 1
+        return
+    end
+    
+    // Sinon, on la divise en 2 balles plus petites
+    newSize = ballSize[ballIndex] - 1
+    
+    // Trouve 2 emplacements libres pour les nouvelles balles
+    slot1 = -1
+    slot2 = -1
+    
+    for i = 0 to 7
+        if !ballActive[i] && slot1 == -1
+            slot1 = i
+        else
+            if !ballActive[i] && slot2 == -1
+                slot2 = i
+            end
+        end
+    end
+    
+    if slot1 != -1
+        ballActive[slot1] = true
+        ballX[slot1] = ballX[ballIndex] - 10
+        ballY[slot1] = ballY[ballIndex]
+        ballVX[slot1] = -2
+        ballVY[slot1] = -1
+        ballSize[slot1] = newSize
+    end
+    
+    if slot2 != -1
+        ballActive[slot2] = true
+        ballX[slot2] = ballX[ballIndex] + 10
+        ballY[slot2] = ballY[ballIndex]
+        ballVX[slot2] = 2
+        ballVY[slot2] = -1
+        ballSize[slot2] = newSize
+    end
+end
+
+function getBallRadius()
+    if size == 3
+        return 25  // Grosse balle
+    end
+    if size == 2
+        return 15  // Moyenne balle
+    end
+    return 8       // Petite balle
+end
+
+function checkWinCondition()
+    activeBalls = 0
+    for i = 0 to 7
+        if ballActive[i]
+            activeBalls = activeBalls + 1
+        end
+    end
+    
+    if activeBalls == 0
+        gameWon = true
+    end
+end
+
+function drawGame()
+    // Joueur (petit rectangle)
+    drawRect(playerX, playerY, playerWidth, playerHeight, "#00FF00")
+    
+    // Harpon
+    if harpoonActive
+        drawRect(harpoonX, harpoonY, harpoonWidth, playerY - harpoonY, "#FFFFFF")
+    end
+    
+    // Balles
+    for i = 0 to 7
+        if ballActive[i]
+            size = ballSize[i]
+            radius = getBallRadius()
+            color = "#FF0000"
+            if ballSize[i] == 2
+                color = "#FF7F00"
+            end
+            if ballSize[i] == 1
+                color = "#FFFF00"
+            end
+            drawCircle(ballX[i], ballY[i], radius, color)
+        end
+    end
+    
+    // Interface
+    drawText("PANG", 40, 20, "#FFFFFF")
+    drawText("Score: " + score, 40, 35, "#FFFF00")
+    drawText("Flèches: Bouger  ESPACE: Tirer", 250, 20, "#CCCCCC")
+end
+
+function gameOverScreen()
+    clearScreen("#440000")
+    drawText("GAME OVER", 150, 140, "#FF0000")
+    drawText("Score final: " + score, 140, 160, "#FFFF00")
+    drawText("Une balle vous a touché!", 110, 180, "#FFFFFF")
+    drawText("Rechargez pour rejouer", 120, 200, "#CCCCCC")
+end
+
+function victoryScreen()
+    clearScreen("#004400")
+    drawText("VICTOIRE!", 150, 140, "#00FF00")
+    drawText("Score final: " + score, 140, 160, "#FFFF00")
+    drawText("Toutes les balles détruites!", 100, 180, "#FFFFFF")
+    drawText("Rechargez pour rejouer", 120, 200, "#CCCCCC")
+end

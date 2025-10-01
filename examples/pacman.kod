@@ -1,0 +1,282 @@
+// Jeu: Pac-Man Simplifié  
+// Mangez tous les points en évitant les fantômes !
+
+// Variables de Pac-Man
+let pacX = 190
+let pacY = 240
+let pacSize = 12
+let pacSpeed = 3
+let pacDirection = 0  // 0=droite, 1=bas, 2=gauche, 3=haut
+
+// Variables des points à manger
+let dots = [true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true]
+let dotX = [60, 100, 140, 180, 220, 260, 300, 340, 60, 100, 140, 180, 220, 260, 300, 340, 60, 100, 140, 180, 220, 260, 300, 340, 60, 100, 140, 180, 220, 260, 300, 340, 60, 100, 140, 180, 220, 260, 300, 340]
+let dotY = [60, 60, 60, 60, 60, 60, 60, 60, 100, 100, 100, 100, 100, 100, 100, 100, 140, 140, 140, 140, 140, 140, 140, 140, 180, 180, 180, 180, 180, 180, 180, 180, 220, 220, 220, 220, 220, 220, 220, 220]
+
+// Variables des fantômes  
+let ghosts = [true, true, true]
+let ghostX = [80, 200, 320]
+let ghostY = [80, 120, 160]
+let ghostDirX = [1, -1, 1]
+let ghostDirY = [0, 1, -1]
+let ghostSpeed = 1
+
+// Variables du jeu
+let score = 0
+let lives = 3
+let gameOver = false
+let dotsRemaining = 40
+let moveTimer = 0
+
+function start()
+    clearScreen("#000000")
+    playSound("do", 0.4)
+end
+
+function update()
+    if gameOver
+        showGameOver()
+        return
+    end
+    
+    clearScreen("#000000")
+    drawMaze()
+    handleInput()
+    updatePacMan()
+    updateGhosts()
+    checkCollisions()
+    drawGame()
+end
+
+function drawMaze()
+    // Murs du labyrinthe (rectangles simples)
+    drawRect(40, 40, 320, 20, "#0000FF")   // Haut
+    drawRect(40, 260, 320, 20, "#0000FF")  // Bas
+    drawRect(40, 40, 20, 240, "#0000FF")   // Gauche
+    drawRect(340, 40, 20, 240, "#0000FF")  // Droite
+    
+    // Quelques murs internes
+    drawRect(120, 80, 20, 60, "#0000FF")
+    drawRect(260, 80, 20, 60, "#0000FF")
+    drawRect(160, 120, 80, 20, "#0000FF")
+    drawRect(80, 200, 60, 20, "#0000FF")
+    drawRect(260, 200, 60, 20, "#0000FF")
+end
+
+function handleInput()
+    if moveTimer > 0
+        moveTimer = moveTimer - 1
+        return
+    end
+    
+    // Contrôles directionnels avec délai
+    if isKeyPressed("right")
+        pacDirection = 0
+        moveTimer = 3
+    end
+    if isKeyPressed("down")
+        pacDirection = 1  
+        moveTimer = 3
+    end
+    if isKeyPressed("left")
+        pacDirection = 2
+        moveTimer = 3
+    end
+    if isKeyPressed("up")
+        pacDirection = 3
+        moveTimer = 3
+    end
+end
+
+function updatePacMan()
+    newX = pacX
+    newY = pacY
+    
+    // Mouvement selon la direction
+    if pacDirection == 0  // Droite
+        newX = pacX + pacSpeed
+    end
+    if pacDirection == 1  // Bas
+        newY = pacY + pacSpeed
+    end
+    if pacDirection == 2  // Gauche
+        newX = pacX - pacSpeed
+    end
+    if pacDirection == 3  // Haut
+        newY = pacY - pacSpeed
+    end
+    
+    // Vérifier les limites et murs simples
+    if newX > 50 && newX < 330 && newY > 50 && newY < 250
+        // Vérification basique des murs internes
+        canMove = true
+        
+        if newX > 115 && newX < 145 && newY > 75 && newY < 145
+            canMove = false  // Mur gauche interne
+        end
+        if newX > 255 && newX < 285 && newY > 75 && newY < 145
+            canMove = false  // Mur droite interne
+        end
+        if newX > 155 && newX < 245 && newY > 115 && newY < 145
+            canMove = false  // Mur central
+        end
+        if newX > 75 && newX < 145 && newY > 195 && newY < 225
+            canMove = false  // Mur bas gauche
+        end
+        if newX > 255 && newX < 325 && newY > 195 && newY < 225
+            canMove = false  // Mur bas droite
+        end
+        
+        if canMove
+            pacX = newX
+            pacY = newY
+        end
+    end
+    
+    // Téléportation sur les côtés
+    if pacX < 50
+        pacX = 330
+    end
+    if pacX > 350
+        pacX = 70
+    end
+end
+
+function updateGhosts()
+    for i = 0 to 2
+        if ghosts[i]
+            // Mouvement simple des fantômes
+            ghostX[i] = ghostX[i] + (ghostDirX[i] * ghostSpeed)
+            ghostY[i] = ghostY[i] + (ghostDirY[i] * ghostSpeed)
+            
+            // Rebond sur les murs
+            if ghostX[i] < 70 || ghostX[i] > 320
+                ghostDirX[i] = ghostDirX[i] * -1
+            end
+            if ghostY[i] < 70 || ghostY[i] > 240
+                ghostDirY[i] = ghostDirY[i] * -1
+            end
+            
+            // Changement de direction aléatoire
+            if random(0, 100) < 2
+                ghostDirX[i] = random(-1, 1)
+                ghostDirY[i] = random(-1, 1)
+            end
+        end
+    end
+end
+
+function checkCollisions()
+    // Collision avec les points
+    for i = 0 to 39
+        if dots[i]
+            distance = (pacX - dotX[i]) * (pacX - dotX[i]) + (pacY - dotY[i]) * (pacY - dotY[i])
+            if distance < 400  // Distance au carré
+                dots[i] = false
+                score = score + 10
+                dotsRemaining = dotsRemaining - 1
+                playSound("re", 0.1)
+                
+                // Victoire si tous les points sont mangés
+                if dotsRemaining == 0
+                    score = score + 200
+                    playSound("do2", 0.8)
+                    gameOver = true
+                end
+            end
+        end
+    end
+    
+    // Collision avec les fantômes
+    for i = 0 to 2
+        if ghosts[i]
+            distance = (pacX - ghostX[i]) * (pacX - ghostX[i]) + (pacY - ghostY[i]) * (pacY - ghostY[i])
+            if distance < 600  // Distance au carré
+                lives = lives - 1
+                playSound("la", 0.5)
+                
+                // Repositionner Pac-Man
+                pacX = 190
+                pacY = 240
+                
+                if lives <= 0
+                    gameOver = true
+                end
+            end
+        end
+    end
+end
+
+function drawGame()
+    // Points à manger
+    for i = 0 to 39
+        if dots[i]
+            drawCircle(dotX[i], dotY[i], 3, "#FFFF00")
+        end
+    end
+    
+    // Pac-Man avec animation de bouche
+    drawCircle(pacX, pacY, pacSize, "#FFFF00")
+    
+    // Bouche de Pac-Man selon la direction
+    mouthSize = 6
+    if pacDirection == 0  // Droite
+        drawRect(pacX, pacY - 3, mouthSize, 6, "#000000")
+    end
+    if pacDirection == 1  // Bas
+        drawRect(pacX - 3, pacY, 6, mouthSize, "#000000")
+    end
+    if pacDirection == 2  // Gauche
+        drawRect(pacX - mouthSize, pacY - 3, mouthSize, 6, "#000000")
+    end
+    if pacDirection == 3  // Haut
+        drawRect(pacX - 3, pacY - mouthSize, 6, mouthSize, "#000000")
+    end
+    
+    // Fantômes
+    for i = 0 to 2
+        if ghosts[i]
+            // Corps du fantôme
+            if i == 0
+                color = "#FF0000"  // Rouge
+            else if i == 1
+                color = "#FF69B4"  // Rose
+            else
+                color = "#00FFFF"  // Cyan
+            end
+            
+            drawRect(ghostX[i] - 8, ghostY[i] - 8, 16, 12, color)
+            drawRect(ghostX[i] - 6, ghostY[i] + 4, 3, 4, color)
+            drawRect(ghostX[i] - 1, ghostY[i] + 4, 3, 4, color)
+            drawRect(ghostX[i] + 4, ghostY[i] + 4, 3, 4, color)
+            
+            // Yeux
+            drawCircle(ghostX[i] - 3, ghostY[i] - 3, 2, "#FFFFFF")
+            drawCircle(ghostX[i] + 3, ghostY[i] - 3, 2, "#FFFFFF")
+            drawCircle(ghostX[i] - 3, ghostY[i] - 3, 1, "#000000")
+            drawCircle(ghostX[i] + 3, ghostY[i] - 3, 1, "#000000")
+        end
+    end
+    
+    // Interface
+    drawText("PAC-MAN", 200, 20, "#FFFF00")
+    drawText("Score: " + score, 80, 20, "#FFFFFF")
+    drawText("Vies: " + lives, 300, 20, "#FF0000")
+    drawText("Points: " + dotsRemaining, 200, 285, "#FFFF00")
+end
+
+function showGameOver()
+    clearScreen("#000044")
+    
+    if dotsRemaining == 0
+        drawText("VICTOIRE !", 200, 100, "#00FF00")
+        drawText("Tous les points mangés !", 200, 130, "#FFFF00")
+    else
+        drawText("GAME OVER", 200, 100, "#FF0000")
+        drawText("Les fantômes vous ont eu !", 200, 130, "#FFFFFF")
+    end
+    
+    drawText("Score final: " + score, 200, 160, "#FFFF00")
+    drawText("Points mangés: " + (40 - dotsRemaining), 200, 180, "#FFFFFF")
+    drawText("Rechargez pour rejouer", 200, 210, "#CCCCCC")
+end
